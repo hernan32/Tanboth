@@ -4,7 +4,7 @@ public class Tanboth {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        FlashModel flashClient = new FlashModel("Knobbers","35413880");
+        GameParser flashClient = new GameParser("Knobbers", "35413880");
 
         //Tanoth Flash Model
         System.out.println("<---------------------->");
