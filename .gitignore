@@ -77,3 +77,4 @@ fabric.properties
 .idea/workspace.xml
 Tanboth.iml
 target/
+/.idea/
