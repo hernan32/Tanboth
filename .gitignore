@@ -78,3 +78,5 @@ fabric.properties
 Tanboth.iml
 target/
 /.idea/
+/.idea/Tanboth.iml
+/.idea/modules.xml
