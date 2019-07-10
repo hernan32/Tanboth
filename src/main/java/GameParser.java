@@ -31,7 +31,7 @@ public class GameParser {
 
     /*
         Method List:
-        MiniUpdate ¿?
+        MiniUpdate -> "HeaderUpdate"
         GetInboxHeaders
         GetOutboxHeaders
         GetGuild
@@ -43,11 +43,17 @@ public class GameParser {
         GetMount
         GetDungeon
         GetPremiumData
+        GetParty
+        GetEquipment
+        GetUserAttributes
+        GetChatsecret
+        error
      */
 
-    public List<Adventure> getAdventures() throws IOException, InterruptedException {
+    public List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException {
         GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
+        if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running");
         List<Adventure> adventures = new ArrayList<>();
         Adventure adventure;
         Elements adventuresXML = XML.select("array").select("struct");
@@ -68,5 +74,84 @@ public class GameParser {
 
         return adventures;
     }
+
+    public int getInventorySpace() throws IOException, InterruptedException {
+        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetEquipment", getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
+        Element dataItemsXML = XML.select("array").select("data").first();
+        Elements itemsXML = dataItemsXML.children();
+        return itemsXML.size(); //Max. Inventory Space is "30" (Harcoded)
+    }
+
+    /*
+    <methodResponse>
+        <params>
+            <param>
+                <value>
+                    <struct>
+                        <member>
+                            <name>error</name>
+                            <value>
+                                <string>no_valid_session</string>
+                            </value>
+                        </member>
+                    </struct>
+                </value>
+            </param>
+        </params>
+    </methodResponse>
+    */
+    public boolean timeOut(Document XML) {
+        return true;
+    }
+
+    /*
+    <methodResponse>
+        <params>
+            <param>
+                <value>
+                    <struct>
+                        <member>
+                            <name>answer</name>
+                            <value>
+                                <struct>
+                                    <member>
+                                        <name>running_adventure_id</name>
+                                        <value>
+                                            <i4>122</i4>
+                                        </value>
+                                    </member>
+                                    <member>
+                                        <name>running_adventure_pic</name>
+                                        <value>
+                                            <i4>23</i4>
+                                        </value>
+                                    </member>
+                                    <member>
+                                        <name>running_adventure_time_remain</name>
+                                        <value>
+                                            <i4>1241</i4>
+                                        </value>
+                                    </member>
+                                    <member>
+                                        <name>running_adventure_time_total</name>
+                                        <value>
+                                            <i4>1260</i4>
+                                        </value>
+                                    </member>
+                                </struct>
+                            </value>
+                        </member>
+                    </struct>
+                </value>
+            </param>
+        </params>
+    </methodResponse>
+    */
+    private boolean isActiveAdventure(Document XML) {
+        return XML.getElementsContainingOwnText("running_adventure_id").size() > 0;
+    }
+
+
 
 }
