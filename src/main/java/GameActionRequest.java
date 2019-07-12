@@ -20,6 +20,11 @@ public class GameActionRequest {
             return this;
         }
 
+        public newBuilder addParameter(int parameter) {
+            GAR.parameters += "<param> <value> <int>" + parameter + "</int> </value> </param>";
+            return this;
+        }
+
         public GameActionRequest build() {
             return GAR;
         }

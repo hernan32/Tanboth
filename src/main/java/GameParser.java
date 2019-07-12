@@ -47,13 +47,14 @@ public class GameParser {
         GetEquipment
         GetUserAttributes
         GetChatsecret
+        StartAdventure
         error
      */
 
     public List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException {
         GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running");
+        if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventures");
         List<Adventure> adventures = new ArrayList<>();
         Adventure adventure;
         Elements adventuresXML = XML.select("array").select("struct");
@@ -83,75 +84,55 @@ public class GameParser {
         return itemsXML.size(); //Max. Inventory Space is "30" (Harcoded)
     }
 
-    /*
-    <methodResponse>
-        <params>
-            <param>
-                <value>
-                    <struct>
-                        <member>
-                            <name>error</name>
-                            <value>
-                                <string>no_valid_session</string>
-                            </value>
-                        </member>
-                    </struct>
-                </value>
-            </param>
-        </params>
-    </methodResponse>
-    */
-    public boolean timeOut(Document XML) {
-        return true;
+    public Adventure startAdventureByCriteria(String Criteria) throws InterruptedException, AdventureRunningException, IOException {
+        List<Adventure> AdventureList;
+        Adventure adventureWithMaxGold = new Adventure(0, 0, 0, 0, 0, 0);
+        try {
+            AdventureList = getAdventures();
+            if (Criteria.equals("GOLD")) {
+                for (Adventure adventure : AdventureList) {
+                    if (adventure.getGold() > adventureWithMaxGold.getGold()) adventureWithMaxGold = adventure;
+                }
+                startAdventure(adventureWithMaxGold);
+            }
+        } catch (AdventureRunningException ex) {
+            throw new AdventureRunningException("[ERROR] Quest Running @StartingQuestBy" + Criteria);
+        }
+        return adventureWithMaxGold;
     }
 
-    /*
-    <methodResponse>
-        <params>
-            <param>
-                <value>
-                    <struct>
-                        <member>
-                            <name>answer</name>
-                            <value>
-                                <struct>
-                                    <member>
-                                        <name>running_adventure_id</name>
-                                        <value>
-                                            <i4>122</i4>
-                                        </value>
-                                    </member>
-                                    <member>
-                                        <name>running_adventure_pic</name>
-                                        <value>
-                                            <i4>23</i4>
-                                        </value>
-                                    </member>
-                                    <member>
-                                        <name>running_adventure_time_remain</name>
-                                        <value>
-                                            <i4>1241</i4>
-                                        </value>
-                                    </member>
-                                    <member>
-                                        <name>running_adventure_time_total</name>
-                                        <value>
-                                            <i4>1260</i4>
-                                        </value>
-                                    </member>
-                                </struct>
-                            </value>
-                        </member>
-                    </struct>
-                </value>
-            </param>
-        </params>
-    </methodResponse>
-    */
+    private void startAdventure(Adventure adventure) throws IOException, InterruptedException, AdventureRunningException {
+        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
+        if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @StartingQuest");
+        GameAction = new GameActionRequest.newBuilder("StartAdventure", getSessionID())
+                .addParameter(adventure.getQuestID())
+                .build();
+        httpClient.getXMLByAction(GameAction);
+    }
+
+    public int getFreeAdventuresPerDay() throws IOException, InterruptedException, AdventureRunningException {
+        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
+        if (isActiveAdventure(XML))
+            throw new AdventureRunningException("[ERROR] Quest Running @GettingFreeAdventuresPerDay");
+        return Integer.parseInt(XML.getElementsContainingOwnText("free_adventures_per_day").first().parent().select("i4").text());
+    }
+
+    public int getAdventuresMadeToday() throws IOException, InterruptedException, AdventureRunningException {
+        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
+        if (isActiveAdventure(XML))
+            throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventuresMadeToday");
+        return Integer.parseInt(XML.getElementsContainingOwnText("adventures_made_today").first().parent().select("i4").text());
+    }
+
+    public boolean timeOut(Document XML) {
+        return XML.getElementsContainingOwnText("no_valid_session").size() > 0;
+    }
+
     private boolean isActiveAdventure(Document XML) {
         return XML.getElementsContainingOwnText("running_adventure_id").size() > 0;
     }
-
-
 
 }
