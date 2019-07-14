@@ -3,9 +3,13 @@ package view;
 import controller.TanothGUIController;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.MouseEvent;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -21,6 +25,8 @@ public class TanothGUI extends Application {
     private SystemTray tray;
     private TrayIcon trayIcon;
     private FXMLLoader fxmlLoader;
+    private double xOffset = 0;
+    private double yOffset = 0;
 
     public static void main(String[] args) {
         launch(args);
@@ -31,8 +37,26 @@ public class TanothGUI extends Application {
         stage = primaryStage;
         fxmlLoader = new FXMLLoader(getClass().getResource("/view/resources/fxml/TanothGUI.fxml"));
         Parent root = fxmlLoader.load();
+        root.setOnMousePressed(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                xOffset = event.getSceneX();
+                yOffset = event.getSceneY();
+            }
+        });
+        root.setOnMouseDragged(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                primaryStage.setX(event.getScreenX() - xOffset);
+                primaryStage.setY(event.getScreenY() - yOffset);
+            }
+        });
         Platform.setImplicitExit(false);
         SwingUtilities.invokeLater(this::addAppToTray);
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        //set Stage boundaries to the lower right corner of the visible bounds of the main screen
+        stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
+        stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 260);
         Scene scene = new Scene(root, 500, 260);
         scene.getRoot().requestFocus();
         primaryStage.setTitle("Tanboth");
