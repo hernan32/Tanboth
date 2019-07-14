@@ -1,3 +1,5 @@
+package model;
+
 public class Adventure {
     private int difficulty;
     private int duration;

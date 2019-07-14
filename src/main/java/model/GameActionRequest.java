@@ -1,3 +1,5 @@
+package model;
+
 public class GameActionRequest {
     private String methodName;
     private String parameters;

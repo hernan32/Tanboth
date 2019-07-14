@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="260.0"
+            prefWidth="500.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.TanothGUIController">
+    <children>
+        <FlowPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+                  prefHeight="500.0" prefWidth="500.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+                  AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <Label alignment="BOTTOM_LEFT" contentDisplay="BOTTOM" text="Console Information">
+                    <FlowPane.margin>
+                        <Insets/>
+                    </FlowPane.margin>
+                </Label>
+                <Button fx:id="fxTray" alignment="CENTER" cancelButton="true" contentDisplay="CENTER"
+                        graphicTextGap="0.0" layoutX="479.0" layoutY="15.0" maxHeight="-Infinity" maxWidth="-Infinity"
+                        minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#minimizeToTray"
+                        prefHeight="20.0" prefWidth="20.0" text="_" textAlignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="9.0"/>
+                    </font>
+                    <FlowPane.margin>
+                        <Insets bottom="5.0" left="335.0"/>
+                    </FlowPane.margin>
+                </Button>
+                <Button fx:id="fxClose" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="0.0"
+                        maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+                        mnemonicParsing="false" onAction="#closeProgram" prefHeight="20.0" prefWidth="20.0" text="X"
+                        textAlignment="CENTER">
+                    <font>
+                        <Font name="System Bold" size="9.0"/>
+                    </font>
+                    <FlowPane.margin>
+                        <Insets bottom="5.0" left="5.0"/>
+                    </FlowPane.margin>
+                </Button>
+                <Separator prefWidth="490.0">
+                    <FlowPane.margin>
+                        <Insets bottom="5.0"/>
+                    </FlowPane.margin>
+                </Separator>
+                <TextArea fx:id="fxMainTextArea" editable="false" maxHeight="-Infinity" maxWidth="-Infinity"
+                          minHeight="-Infinity" minWidth="-Infinity" prefHeight="212.0" prefWidth="490.0"
+                          style="-fx-background-color: black; -fx-text-fill: white; -fx-control-inner-background: black;"
+                          text="Loading..." wrapText="true">
+                    <FlowPane.margin>
+                        <Insets bottom="5.0"/>
+                    </FlowPane.margin>
+                    <font>
+                        <Font name="Courier New" size="12.0"/>
+                    </font>
+                </TextArea>
+            </children>
+            <padding>
+                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
+            </padding>
+        </FlowPane>
+    </children>
+</AnchorPane>
