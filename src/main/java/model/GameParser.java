@@ -88,19 +88,22 @@ public class GameParser {
 
     public Adventure startAdventureByCriteria(String Criteria) throws InterruptedException, AdventureRunningException, IOException {
         List<Adventure> AdventureList;
-        Adventure adventureWithMaxGold = new Adventure(0, 0, 0, 0, 0, 0);
+        Adventure adventureWithMaxExp = new Adventure(0, 0, 0, 0, 0, 0);
         try {
             AdventureList = getAdventures();
-            if (Criteria.equals("GOLD")) {
+            if (Criteria.equals("EXP")) {
+                int excludeLastDifficulty = 0; //4
                 for (Adventure adventure : AdventureList) {
-                    if (adventure.getGold() > adventureWithMaxGold.getGold()) adventureWithMaxGold = adventure;
+                    excludeLastDifficulty++;
+                    if (adventure.getExperience() > adventureWithMaxExp.getExperience() && excludeLastDifficulty < 4)
+                        adventureWithMaxExp = adventure;
                 }
-                startAdventure(adventureWithMaxGold);
+                startAdventure(adventureWithMaxExp);
             }
         } catch (AdventureRunningException ex) {
             throw new AdventureRunningException("[ERROR] Quest Running @StartingQuestBy" + Criteria);
         }
-        return adventureWithMaxGold;
+        return adventureWithMaxExp;
     }
 
     private void startAdventure(Adventure adventure) throws IOException, InterruptedException, AdventureRunningException {
