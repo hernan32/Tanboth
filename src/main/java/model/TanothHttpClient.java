@@ -9,18 +9,20 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 public class TanothHttpClient {
-    private String server = "7";
+    private String server;
     private String serverPath;
     private String user;
     private String password;
-    private String loginURI = "https://s7-es.tanoth.gameforge.com/user/login/";
+    private String loginURI;
     private HttpClient httpClient;
     private HttpRequest loginRequest;
     private String loginResponse;
 
-    public TanothHttpClient(String user, String password) {
+    public TanothHttpClient(String user, String password, String loginURI, String serverNumber) {
+        this.loginURI = loginURI;
         this.user = user;
         this.password = password;
+        this.server = serverNumber;
         //HTTP Protocol - Specifications
         httpClient = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())

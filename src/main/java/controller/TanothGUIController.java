@@ -5,7 +5,6 @@ import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import model.Adventure;
 import model.AdventureRunningException;
@@ -13,18 +12,19 @@ import model.GameParser;
 
 import java.awt.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 
 public class TanothGUIController extends Task<Boolean> {
     //Connection References
+    private final String propFileName = "config.properties";
     private GameParser game;
     //FXML References
     @FXML
     private TextArea fxMainTextArea;
     @FXML
     private Button fxTray;
-    @FXML
-    private FlowPane fxFlowPane;
     //Stage References
     private SystemTray tray;
     private TrayIcon trayIcon;
@@ -36,11 +36,17 @@ public class TanothGUIController extends Task<Boolean> {
     private String questStatus = "Stopped.";
     //Tanoth Controller References
     private String mainContentText;
-    private int refrestTimer = 60; //Seconds
-
+    private int refreshTimer = 60; //Seconds
 
     public TanothGUIController() throws IOException, InterruptedException {
-        game = new GameParser("Knobbers", "35413880");
+        Properties prop = new Properties();
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("config/" + propFileName);
+        prop.load(inputStream);
+        String user = prop.getProperty("user");
+        String password = prop.getProperty("password");
+        String serverURL = prop.getProperty("serverURL");
+        String serverNumber = prop.getProperty("serverNumber");
+        game = new GameParser(user, password, serverURL, serverNumber);
     }
 
     @Override
@@ -95,11 +101,11 @@ public class TanothGUIController extends Task<Boolean> {
 
             setMainContentText(adventuresMade, freeAdventures, inventorySpaces, questStatus);
             updateMainContentText();
-            refrestTimer = activeAdventure.getDuration() + 60;
+            refreshTimer = activeAdventure.getDuration() + 60;
 
         } catch (AdventureRunningException ex) {
             setMainContentText(adventuresMade, freeAdventures, inventorySpaces, "Running.");
-            refrestTimer = 60;
+            refreshTimer = 60;
             updateMainContentText();
         }
     }

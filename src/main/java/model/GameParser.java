@@ -13,8 +13,8 @@ import java.util.List;
 public class GameParser {
     private TanothHttpClient httpClient;
 
-    public GameParser(String user, String password) throws IOException, InterruptedException {
-        httpClient = new TanothHttpClient(user, password);
+    public GameParser(String user, String password, String loginURI, String serverNumber) throws IOException, InterruptedException {
+        httpClient = new TanothHttpClient(user, password, loginURI, serverNumber);
         httpClient.login();
         httpClient.setServerPath(getServerPath());
     }
