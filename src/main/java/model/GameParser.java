@@ -1,5 +1,9 @@
 package model;
 
+import model.adventure.Adventure;
+import model.adventure.Criteria;
+import model.adventure.exception.AdventureRunningException;
+import model.exception.TimeOutException;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -64,13 +68,14 @@ public class GameParser {
 
         for (Element adventureXML : adventuresXML) {
             Elements adventureParametersXML = adventureXML.select("i4");
-            //model.Adventure Parameters
+
             difficulty = Integer.parseInt(adventureParametersXML.get(0).text());
             duration = Integer.parseInt(adventureParametersXML.get(1).text());
             experience = Integer.parseInt(adventureParametersXML.get(2).text());
             fightChance = Integer.parseInt(adventureParametersXML.get(3).text());
             gold = Integer.parseInt(adventureParametersXML.get(4).text());
             questID = Integer.parseInt(adventureParametersXML.get(5).text());
+
             adventure = new Adventure(difficulty, duration, experience, fightChance, gold, questID);
             adventures.add(adventure);
         }
@@ -86,30 +91,31 @@ public class GameParser {
         return itemsXML.size(); //Max. Inventory Space is "30" (Harcoded)
     }
 
-    public Adventure startAdventureByCriteria(String Criteria) throws InterruptedException, AdventureRunningException, IOException {
+    public Adventure startAdventureByCriteria(Criteria criteria) throws InterruptedException, AdventureRunningException, IOException, TimeOutException {
         List<Adventure> AdventureList;
-        Adventure adventureWithMaxExp = new Adventure(0, 0, 0, 0, 0, 0);
+        Adventure adventureWithMaxValue = new Adventure(0, 0, 0, 0, 0, 0);
         try {
             AdventureList = getAdventures();
-            if (Criteria.equals("EXP")) {
-                int excludeLastDifficulty = 0; //4
-                for (Adventure adventure : AdventureList) {
-                    excludeLastDifficulty++;
-                    if (adventure.getExperience() > adventureWithMaxExp.getExperience() && excludeLastDifficulty < 4)
-                        adventureWithMaxExp = adventure;
-                }
-                startAdventure(adventureWithMaxExp);
+            int excludeLastDifficulty = 0; //4
+            for (Adventure adventure : AdventureList) {
+                excludeLastDifficulty++;
+                if (adventure.getValue(criteria) > adventureWithMaxValue.getValue(criteria) && excludeLastDifficulty < 4)
+                    adventureWithMaxValue = adventure;
             }
+            startAdventure(adventureWithMaxValue);
         } catch (AdventureRunningException ex) {
-            throw new AdventureRunningException("[ERROR] Quest Running @StartingQuestBy" + Criteria);
+            throw new AdventureRunningException(ex.getMessage());
+        } catch (TimeOutException ex) {
+            throw new TimeOutException(ex.getMessage());
         }
-        return adventureWithMaxExp;
+        return adventureWithMaxValue;
     }
 
-    private void startAdventure(Adventure adventure) throws IOException, InterruptedException, AdventureRunningException {
+    private void startAdventure(Adventure adventure) throws IOException, InterruptedException, AdventureRunningException, TimeOutException {
         GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @StartingQuest");
+        else if (timeOut(XML)) throw new TimeOutException("[ERROR] Connection Time Out @StartingQuest");
         GameAction = new GameActionRequest.newBuilder("StartAdventure", getSessionID())
                 .addParameter(adventure.getQuestID())
                 .build();
@@ -140,4 +146,7 @@ public class GameParser {
         return XML.getElementsContainingOwnText("running_adventure_id").size() > 0;
     }
 
+    public void reconnect() throws IOException, InterruptedException {
+        httpClient.login();
+    }
 }

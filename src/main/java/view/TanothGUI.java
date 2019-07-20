@@ -49,7 +49,7 @@ public class TanothGUI extends Application {
         //set Stage boundaries to the lower right corner of the visible bounds of the main screen
         stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
         stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 260);
-        Scene scene = new Scene(root, 500, 260);
+        Scene scene = new Scene(root, 500, 265);
         scene.getRoot().requestFocus();
         primaryStage.setTitle("Tanboth");
         primaryStage.initStyle(StageStyle.UNDECORATED);

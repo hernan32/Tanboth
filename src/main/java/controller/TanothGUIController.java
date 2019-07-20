@@ -4,11 +4,15 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
-import model.Adventure;
-import model.AdventureRunningException;
 import model.GameParser;
+import model.adventure.Adventure;
+import model.adventure.Criteria;
+import model.adventure.criterias.GoldCriteria;
+import model.adventure.exception.AdventureRunningException;
+import model.exception.TimeOutException;
 
 import java.awt.*;
 import java.io.IOException;
@@ -18,15 +22,17 @@ import java.util.concurrent.TimeUnit;
 
 
 public class TanothGUIController extends Task<Void> {
-    //Connection References
+    //Connection
     private final String propFileName = "config.properties";
     private GameParser game;
-    //FXML References
+    //FXML
     @FXML
     private TextArea fxMainTextArea;
     @FXML
     private Button fxTray;
-    //Stage References
+    @FXML
+    private Label fxStatus;
+    //Stage
     private SystemTray tray;
     private TrayIcon trayIcon;
     private Stage stage;
@@ -35,7 +41,7 @@ public class TanothGUIController extends Task<Void> {
     private int freeAdventures;
     private int inventorySpaces;
     private String questStatus;
-    //Tanoth Controller References
+    //Controller
     private String mainContentText;
     private int refreshTimer = 10; //Seconds
 
@@ -52,25 +58,25 @@ public class TanothGUIController extends Task<Void> {
 
     @Override
     protected Void call() throws Exception {
+        String status = "";
         while (true) {
             updateMainContent();
             if (questStatus.equals("Stopped.")) {
                 if (adventuresMade < freeAdventures) {
-                    System.out.println("adventuresMade < freeAdventures");
                     //startBot();
+                    status = "Free quest available. Starting Quest...";
                 } else {
-                    System.out.println("adventuresMade => freeAdventures");
+                    status = "No free quest available. Waiting for new quests...";
                     refreshTimer = 3600;
                 }
             }
-            System.out.println("Timer : " + refreshTimer);
+            setCurrentStatus(status + " (" + refreshTimer + " Seconds)");
             TimeUnit.SECONDS.sleep(refreshTimer);
         }
     }
 
     @FXML
     public void initialize() {
-        System.out.println("TEST FLAG");
         fxTray.setDefaultButton(false);
         TanothGUIController controller = this;
         new Thread(controller).start();
@@ -78,32 +84,26 @@ public class TanothGUIController extends Task<Void> {
 
     private void updateMainContent() throws IOException, InterruptedException {
         inventorySpaces = game.getInventorySpace();
-
         try {
             adventuresMade = game.getAdventuresMadeToday();
+            freeAdventures = game.getFreeAdventuresPerDay();
             questStatus = "Stopped.";
+            setMainContentText(adventuresMade, freeAdventures, inventorySpaces, questStatus);
         } catch (AdventureRunningException ex) {
+            freeAdventures = -1;
             adventuresMade = -1;
             questStatus = "Running.";
             setMainContentText("Can't get information when - Quest Running -");
+            setCurrentStatus("Waiting... (" + refreshTimer + " Seconds)");
         }
-        try {
-            freeAdventures += game.getFreeAdventuresPerDay();
-            questStatus = "Stopped.";
-        } catch (AdventureRunningException ex) {
-            freeAdventures = -1;
-            questStatus = "Running.";
-            setMainContentText("Can't get information when - Quest Running -");
-        }
-
-        setMainContentText(adventuresMade, freeAdventures, inventorySpaces, questStatus);
         fxMainTextArea.setText(mainContentText);
     }
 
     public void startBot() throws IOException, InterruptedException {
         Adventure activeAdventure;
         try {
-            activeAdventure = game.startAdventureByCriteria("EXP");
+            Criteria criteria = new GoldCriteria();
+            activeAdventure = game.startAdventureByCriteria(criteria);
             questStatus = "[Difficulty: " + activeAdventure.getDifficulty() + " / " +
                     "Duration: " + activeAdventure.getDuration() + " / " +
                     "Exp: " + activeAdventure.getExperience() + " / " +
@@ -119,6 +119,11 @@ public class TanothGUIController extends Task<Void> {
             setMainContentText("Can't get information when - Quest Running -");
             refreshTimer = 10;
             fxMainTextArea.setText(mainContentText);
+        } catch (TimeOutException ex) {
+            setMainContentText("Time Out. Reconnecting...");
+            game.reconnect();
+            refreshTimer = 10;
+            fxMainTextArea.setText(mainContentText);
         }
     }
 
@@ -130,6 +135,10 @@ public class TanothGUIController extends Task<Void> {
 
     private void setMainContentText(String content) {
         mainContentText = content;
+    }
+
+    private void setCurrentStatus(String status) {
+        fxStatus.setText("Current Status: " + status);
     }
 
     @FXML

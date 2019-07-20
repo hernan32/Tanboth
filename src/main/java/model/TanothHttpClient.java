@@ -45,7 +45,7 @@ public class TanothHttpClient {
         return loginResponse;
     }
 
-    public void setServerPath(String serverPath) throws IOException, InterruptedException {
+    public void setServerPath(String serverPath) {
         this.serverPath = serverPath;
     }
 

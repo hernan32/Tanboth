@@ -1,4 +1,4 @@
-package model;
+package model.adventure;
 
 public class Adventure {
     private int difficulty;
@@ -17,7 +17,9 @@ public class Adventure {
         this.questID = questID;
     }
 
-    public int getDifficulty() {return difficulty;}
+    public int getDifficulty() {
+        return difficulty;
+    }
 
     public int getDuration() {
         return duration;
@@ -38,4 +40,10 @@ public class Adventure {
     public int getQuestID() {
         return questID;
     }
+
+    public int getValue(Criteria c) {
+        return c.getValueFor(this);
+    }
+
+
 }

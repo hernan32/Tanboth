@@ -1,4 +1,4 @@
-package model;
+package model.adventure.exception;
 
 public class AdventureRunningException extends Exception {
     public AdventureRunningException(String message) {
