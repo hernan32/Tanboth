@@ -24,8 +24,6 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class TanothGUIController {
-    //Connection
-    private final String propFileName = "config.properties";
     private GameParser game;
     //FXML
     @FXML
@@ -33,26 +31,25 @@ public class TanothGUIController {
     @FXML
     private Button fxTray;
     @FXML
-    private Label fxCurrentStatus;
-    @FXML
     private Label fxStatus;
     //Stage
     private SystemTray tray;
     private TrayIcon trayIcon;
-    private Stage stage;
     //Tanoth Attributes
     private int adventuresMade;
     private int freeAdventures;
     private int inventorySpaces;
     private String questStatus;
-    //Controller
-    private String mainContentText;
     private int refreshTimer = 60; //Seconds
 
     public TanothGUIController() throws IOException, InterruptedException {
         Properties prop = new Properties();
+        //Connection
+        String propFileName = "config.properties";
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("config/" + propFileName);
-        prop.load(inputStream);
+        if (inputStream != null) {
+            prop.load(inputStream);
+        }
         String user = prop.getProperty("user");
         String password = prop.getProperty("password");
         String serverURL = prop.getProperty("serverURL");
@@ -60,7 +57,7 @@ public class TanothGUIController {
         game = new GameParser(user, password, serverURL, serverNumber);
     }
 
-    Task questCheker = new Task() {
+    private Task questChecker = new Task() {
         @Override
         protected Object call() throws Exception {
             String status = "";
@@ -87,7 +84,7 @@ public class TanothGUIController {
                 Log.info(status.toUpperCase());
                 this.updateMessage(status + " (" + refreshTimer + " Seconds)");
                 Log.warn("Fin de ciclo");
-                Thread.currentThread().sleep(TimeUnit.SECONDS.toMillis(1/*refreshTimer*/));
+                Thread.sleep(TimeUnit.SECONDS.toMillis(1/*refreshTimer*/));
             }
         }
     };
@@ -96,8 +93,8 @@ public class TanothGUIController {
     @FXML
     public void initialize() {
         fxTray.setDefaultButton(false);
-        Thread questCheckerThread = new Thread(questCheker);
-        fxStatus.textProperty().bind(questCheker.messageProperty());
+        Thread questCheckerThread = new Thread(questChecker);
+        fxStatus.textProperty().bind(questChecker.messageProperty());
         questCheckerThread.start();
     }
 
@@ -117,7 +114,7 @@ public class TanothGUIController {
         }
     }
 
-    public void startBot() throws IOException, InterruptedException {
+    private void startBot() throws IOException, InterruptedException {
         Adventure activeAdventure;
         try {
             Criteria criteria = new TimeCriteria();
@@ -145,7 +142,8 @@ public class TanothGUIController {
     }
 
     private void setMainContentText(int adventuresMade, int freeAdventures, int inventorySpaces, String questStatus) {
-        mainContentText = "Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
+        //Controller
+        String mainContentText = "Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
                 "Free Inventory Spaces: " + inventorySpaces + "\n" +
                 "Adventure Status: " + questStatus;
         setTextArea(mainContentText);
@@ -170,7 +168,7 @@ public class TanothGUIController {
 
     @FXML
     private void minimizeToTray() {
-        stage = (Stage) fxTray.getScene().getWindow();
+        Stage stage = (Stage) fxTray.getScene().getWindow();
         stage.hide();
     }
 

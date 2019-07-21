@@ -57,7 +57,7 @@ public class GameParser {
         error
      */
 
-    public List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException {
+    private List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException {
         GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventures");
@@ -88,7 +88,7 @@ public class GameParser {
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         Element dataItemsXML = XML.select("array").select("data").first();
         Elements itemsXML = dataItemsXML.children();
-        return itemsXML.size(); //Max. Inventory Space is "30" (Harcoded)
+        return itemsXML.size(); //Max. Inventory Space is "30" (Hardcoded)
     }
 
     public Adventure startAdventureByCriteria(Criteria criteria) throws InterruptedException, AdventureRunningException, IOException, TimeOutException {
@@ -136,7 +136,7 @@ public class GameParser {
         return Integer.parseInt(XML.getElementsContainingOwnText("adventures_made_today").first().parent().select("i4").text());
     }
 
-    public boolean timeOut(Document XML) {
+    private boolean timeOut(Document XML) {
         return XML.getElementsContainingOwnText("no_valid_session").size() > 0;
     }
 

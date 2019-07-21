@@ -15,7 +15,6 @@ public class TanothHttpClient {
     private String password;
     private String loginURI;
     private HttpClient httpClient;
-    private HttpRequest loginRequest;
     private String loginResponse;
 
     public TanothHttpClient(String user, String password, String loginURI, String serverNumber) {
@@ -32,7 +31,7 @@ public class TanothHttpClient {
     }
 
     public void login() throws IOException, InterruptedException {
-        loginRequest = HttpRequest.newBuilder()
+        HttpRequest loginRequest = HttpRequest.newBuilder()
                 .uri(URI.create(loginURI))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .timeout(Duration.ofMinutes(1))
