@@ -1,18 +1,18 @@
 package model;
 
-public class GameActionRequest {
+public class GameAction {
     private String methodName;
     private String parameters;
 
     //Cancel default instance creation for Builder Pattern
-    private GameActionRequest() {
+    private GameAction() {
     }
 
     public static class newBuilder {
-        private GameActionRequest GAR;
+        private GameAction GAR;
 
         public newBuilder(String methodName, String sessionID) {
-            GAR = new GameActionRequest();
+            GAR = new GameAction();
             GAR.methodName = "<methodName>" + methodName + "</methodName>";
             GAR.parameters = "<param> <value> <string>" + sessionID + "</string> </value> </param>";
         }
@@ -27,7 +27,7 @@ public class GameActionRequest {
             return this;
         }
 
-        public GameActionRequest build() {
+        public GameAction build() {
             return GAR;
         }
     }

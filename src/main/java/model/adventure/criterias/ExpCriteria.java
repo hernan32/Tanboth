@@ -4,7 +4,8 @@ import model.adventure.Adventure;
 import model.adventure.Criteria;
 
 public class ExpCriteria extends Criteria {
-    public int getValueFor(Adventure adventure) {
-        return adventure.getExperience();
+    public Adventure getBestFor(Adventure localAdventure, Adventure parameterAdventure) {
+        if (localAdventure.getExperience() > parameterAdventure.getExperience()) return localAdventure;
+        else return parameterAdventure;
     }
 }

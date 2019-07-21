@@ -60,12 +60,13 @@
                         <Insets/>
                     </FlowPane.margin>
                 </Separator>
-                <Label fx:id="fxStatus" alignment="BOTTOM_LEFT" contentDisplay="BOTTOM" layoutX="15.0" layoutY="19.0"
-                       minWidth="490.0" text="Current Status:">
+                <Label fx:id="fxCurrentStatus" alignment="BOTTOM_LEFT" contentDisplay="BOTTOM" layoutX="15.0"
+                       layoutY="19.0" text="Current Status:">
                     <FlowPane.margin>
-                        <Insets/>
+                        <Insets right="5.0"/>
                     </FlowPane.margin>
                 </Label>
+                <Label fx:id="fxStatus" text="Loading..."/>
             </children>
             <padding>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>

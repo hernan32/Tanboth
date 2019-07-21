@@ -49,7 +49,7 @@ public class TanothHttpClient {
         this.serverPath = serverPath;
     }
 
-    public String getXMLByAction(GameActionRequest GAR) throws IOException, InterruptedException {
+    public String getXMLByAction(GameAction GAR) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(serverPath))
                 .header("Content-Type", "text/xml")

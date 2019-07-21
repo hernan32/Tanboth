@@ -58,7 +58,7 @@ public class GameParser {
      */
 
     public List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException {
-        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
+        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventures");
         List<Adventure> adventures = new ArrayList<>();
@@ -84,7 +84,7 @@ public class GameParser {
     }
 
     public int getInventorySpace() throws IOException, InterruptedException {
-        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetEquipment", getSessionID()).build();
+        GameAction GameAction = new GameAction.newBuilder("GetEquipment", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         Element dataItemsXML = XML.select("array").select("data").first();
         Elements itemsXML = dataItemsXML.children();
@@ -93,37 +93,35 @@ public class GameParser {
 
     public Adventure startAdventureByCriteria(Criteria criteria) throws InterruptedException, AdventureRunningException, IOException, TimeOutException {
         List<Adventure> AdventureList;
-        Adventure adventureWithMaxValue = new Adventure(0, 0, 0, 0, 0, 0);
+        Adventure adventureByCriteria = new Adventure(Integer.MAX_VALUE, Integer.MAX_VALUE, 0, Integer.MAX_VALUE, 0, 0);
         try {
             AdventureList = getAdventures();
-            int excludeLastDifficulty = 0; //4
             for (Adventure adventure : AdventureList) {
-                excludeLastDifficulty++;
-                if (adventure.getValue(criteria) > adventureWithMaxValue.getValue(criteria) && excludeLastDifficulty < 4)
-                    adventureWithMaxValue = adventure;
+                if (adventure.getDifficulty() != 2)
+                    adventureByCriteria = adventure.getBest(criteria, adventureByCriteria); // =2 Hardest
             }
-            startAdventure(adventureWithMaxValue);
+            startAdventure(adventureByCriteria);
         } catch (AdventureRunningException ex) {
             throw new AdventureRunningException(ex.getMessage());
         } catch (TimeOutException ex) {
             throw new TimeOutException(ex.getMessage());
         }
-        return adventureWithMaxValue;
+        return adventureByCriteria;
     }
 
     private void startAdventure(Adventure adventure) throws IOException, InterruptedException, AdventureRunningException, TimeOutException {
-        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
+        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @StartingQuest");
         else if (timeOut(XML)) throw new TimeOutException("[ERROR] Connection Time Out @StartingQuest");
-        GameAction = new GameActionRequest.newBuilder("StartAdventure", getSessionID())
+        GameAction = new GameAction.newBuilder("StartAdventure", getSessionID())
                 .addParameter(adventure.getQuestID())
                 .build();
         httpClient.getXMLByAction(GameAction);
     }
 
     public int getFreeAdventuresPerDay() throws IOException, InterruptedException, AdventureRunningException {
-        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
+        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML))
             throw new AdventureRunningException("[ERROR] Quest Running @GettingFreeAdventuresPerDay");
@@ -131,7 +129,7 @@ public class GameParser {
     }
 
     public int getAdventuresMadeToday() throws IOException, InterruptedException, AdventureRunningException {
-        GameActionRequest GameAction = new GameActionRequest.newBuilder("GetAdventures", getSessionID()).build();
+        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML))
             throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventuresMadeToday");

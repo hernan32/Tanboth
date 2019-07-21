@@ -41,8 +41,12 @@ public class Adventure {
         return questID;
     }
 
-    public int getValue(Criteria c) {
+    /*public int getValue(Criteria c) {
         return c.getValueFor(this);
+    }*/
+
+    public Adventure getBest(Criteria c, Adventure adventure) {
+        return c.getBestFor(this, adventure);
     }
 
 

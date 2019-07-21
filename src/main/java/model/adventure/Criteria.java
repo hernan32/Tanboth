@@ -1,5 +1,5 @@
 package model.adventure;
 
 public abstract class Criteria {
-    public abstract int getValueFor(Adventure adventure);
+    public abstract Adventure getBestFor(Adventure localAdventure, Adventure parameterAdventure);
 }
