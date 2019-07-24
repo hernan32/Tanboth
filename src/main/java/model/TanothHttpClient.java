@@ -1,12 +1,14 @@
 package model;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Properties;
 
 public class TanothHttpClient {
     private String server;
@@ -17,17 +19,24 @@ public class TanothHttpClient {
     private HttpClient httpClient;
     private String loginResponse;
 
-    public TanothHttpClient(String user, String password, String loginURI, String serverNumber) {
-        this.loginURI = loginURI;
-        this.user = user;
-        this.password = password;
-        this.server = serverNumber;
-        //HTTP Protocol - Specifications
+    public TanothHttpClient() throws IOException, InterruptedException {
+        Properties prop = new Properties();
+        String propFileName = "config.properties";
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("config/" + propFileName);
+        if (inputStream != null) {
+            prop.load(inputStream);
+        }
+        loginURI = prop.getProperty("serverURL");
+        user = prop.getProperty("user");
+        password = prop.getProperty("password");
+        server = prop.getProperty("serverNumber");
+
         httpClient = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
+        login();
     }
 
     public void login() throws IOException, InterruptedException {

@@ -13,15 +13,17 @@ import model.adventure.Adventure;
 import model.adventure.Criteria;
 import model.adventure.criterias.TimeCriteria;
 import model.adventure.exception.AdventureRunningException;
+import model.adventure.exception.FightResultException;
 import model.exception.TimeOutException;
 
 import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+
+import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class TanothGUIController {
     private GameParser game;
@@ -39,52 +41,41 @@ public class TanothGUIController {
     private int adventuresMade;
     private int freeAdventures;
     private int inventorySpaces;
-    private String questStatus;
-    private int refreshTimer = 60; //Seconds
+    private int sleep = 60; //Seconds
+    private boolean questStarted = false;
+
+    enum Status {
+        STARTED, STOPPED
+    }
 
     public TanothGUIController() throws IOException, InterruptedException {
-        Properties prop = new Properties();
-        //Connection
-        String propFileName = "config.properties";
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("config/" + propFileName);
-        if (inputStream != null) {
-            prop.load(inputStream);
-        }
-        String user = prop.getProperty("user");
-        String password = prop.getProperty("password");
-        String serverURL = prop.getProperty("serverURL");
-        String serverNumber = prop.getProperty("serverNumber");
-        game = new GameParser(user, password, serverURL, serverNumber);
+        game = new GameParser();
     }
 
     private Task questChecker = new Task() {
         @Override
         protected Object call() throws Exception {
-            String status = "";
+            String status;
             while (true) {
-
-                Log.warn("Inicio de Ciclo");
-                Log.info("UPDATING MAIN CONTENT");
-                try {
-                    collectData();
-                } catch (AdventureRunningException ex) {
-                    status = ex.getMessage();
-                }
-                if (questStatus.equals("Stopped.")) {
-                    Log.info("QUEST STOPPED");
+                Log.warn("------------- > Loop Start");
+                Log.info("Collecting Data...");
+                collectData();
+                if (!questStarted) {
+                    Log.info("Stopped == TRUE");
                     if (adventuresMade < freeAdventures) {
-                        Log.info("STARTING BOT");
+                        Log.info("adventuresMade < freeAdventures == TRUE  -> ¡Starting Bot!");
                         startBot();
                         status = "Free quest available. Starting Quest...";
                     } else {
-                        status = "No free quest available. Waiting for new quests...";
-                        refreshTimer = 3600;
+                        sleep = getSecondsToNextQuestRefresh();
+                        Log.info("adventuresMade < freeAdventures == FALSE  -> Restarting at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(sleep)));
+                        status = "No free quest available. Restarting at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(sleep));
                     }
-                }
-                Log.info(status.toUpperCase());
-                this.updateMessage(status + " (" + refreshTimer + " Seconds)");
-                Log.warn("Fin de ciclo");
-                Thread.sleep(TimeUnit.SECONDS.toMillis(1/*refreshTimer*/));
+                } else status = "Adventure already running. Waiting for stop. Refreshing... ";
+                this.updateMessage(status + " (" + sleep + " Seconds)");
+                Log.warn("------------- > Loop End");
+                Log.warn("## Sleep Thread: " + TimeUnit.SECONDS.toMillis(sleep) + " millis / " + sleep + " sec");
+                Thread.sleep(TimeUnit.SECONDS.toMillis(sleep));
             }
         }
     };
@@ -98,19 +89,33 @@ public class TanothGUIController {
         questCheckerThread.start();
     }
 
-    private void collectData() throws IOException, InterruptedException, AdventureRunningException {
-        inventorySpaces = game.getInventorySpace();
+    private void collectData() throws IOException, InterruptedException {
         try {
+            if (questStarted) {
+                game.getFightResult();
+            }
+            inventorySpaces = game.getInventorySpace();
+            Log.info("Getting Inventory Space: Done.");
             adventuresMade = game.getAdventuresMadeToday();
+            Log.info("Getting Adventures Made: Done.");
             freeAdventures = game.getFreeAdventuresPerDay();
-            questStatus = "Stopped.";
-            setMainContentText(adventuresMade, freeAdventures, inventorySpaces, questStatus);
+            Log.info("Getting Free Adventures: Done.");
+            questStarted = false;
+            setMainContentText(adventuresMade, freeAdventures, inventorySpaces, Status.STOPPED.toString());
+            Log.info("[Quest: " + adventuresMade + " / " + freeAdventures + "] [Spaces: " + inventorySpaces + "] [Status: " + Status.STOPPED.toString() + "]");
         } catch (AdventureRunningException ex) {
             freeAdventures = -1;
             adventuresMade = -1;
-            questStatus = "Running.";
+            questStarted = true;
+            Log.info("[Quest: " + adventuresMade + " / " + freeAdventures + "] [Spaces: " + inventorySpaces + "] [Status: " + Status.STARTED.toString() + "]");
             setMainContentText("Can't get information when - Quest Running -");
-            throw new AdventureRunningException("Waiting...");
+        } catch (TimeOutException ex) {
+            setMainContentText("Time Out. Reconnecting...");
+            Log.warn("Time Out. Reconnecting...");
+            game.reconnect();
+            collectData();
+        } catch (FightResultException ex) {
+            Log.info(ex.getMessage());
         }
     }
 
@@ -119,7 +124,8 @@ public class TanothGUIController {
         try {
             Criteria criteria = new TimeCriteria();
             activeAdventure = game.startAdventureByCriteria(criteria);
-            questStatus = "[Difficulty: " + activeAdventure.getDifficulty() + " / " +
+            questStarted = true;
+            String questDescription = "[Difficulty: " + activeAdventure.getDifficulty() + " / " +
                     "Duration: " + activeAdventure.getDuration() + " / " +
                     "Exp: " + activeAdventure.getExperience() + " / " +
                     "Chance: " + activeAdventure.getFightChance() + " / " +
@@ -127,17 +133,17 @@ public class TanothGUIController {
                     "Quest ID: " + activeAdventure.getQuestID() + " / " +
                     "Finishing at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(activeAdventure.getDuration())) + "]";
 
-            setMainContentText(adventuresMade + 1, freeAdventures, inventorySpaces, questStatus);
-            refreshTimer = activeAdventure.getDuration() + 20; // 20 Sec. Delay
+            setMainContentText(adventuresMade + 1, freeAdventures, inventorySpaces, questDescription);
+            sleep = activeAdventure.getDuration() + 20; // 20 Sec. Delay
 
         } catch (AdventureRunningException ex) {
             setMainContentText("Can't get information when - Quest Running -");
-            refreshTimer = 10;
+            sleep = 60;
         } catch (TimeOutException ex) {
             setMainContentText("Time Out. Reconnecting...");
-            Log.warn("RECONNECTING");
+            Log.warn("Reconnecting...");
             game.reconnect();
-            refreshTimer = 10;
+            startBot();
         }
     }
 
@@ -155,7 +161,7 @@ public class TanothGUIController {
 
     private void setTextArea(String mainContentText) {
         Platform.runLater(() -> {
-            Log.info("RUN LATER ## UPDATED TEXTAREA");
+            Log.info("Updating Main Content Text Area... (FX Thread)");
             fxMainTextArea.setText(mainContentText);
         });
     }
@@ -164,6 +170,7 @@ public class TanothGUIController {
     private void closeProgram() {
         Platform.exit();
         tray.remove(trayIcon);
+        questChecker.cancel();
     }
 
     @FXML
@@ -177,5 +184,17 @@ public class TanothGUIController {
         this.trayIcon = trayIcon;
     }
 
+    private int getSecondsToNextQuestRefresh() {
+        LocalTime timeNow = LocalTime.now();
+        LocalTime refreshTime = LocalTime.parse("19:00:00");
+        int secondsRefresh;
+        Log.info(Boolean.toString(timeNow.isBefore(refreshTime)));
+        if (timeNow.isBefore(refreshTime)) {
+            secondsRefresh = (int) SECONDS.between(timeNow, refreshTime) + 120;
+        } else {
+            secondsRefresh = (int) Math.abs(SECONDS.between(timeNow, LocalTime.parse("23:59:59"))) + (19 * 60 * 60) + 120;
+        }
+        return secondsRefresh;
+    }
 
 }

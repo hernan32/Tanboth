@@ -2,7 +2,9 @@ package model;
 
 import model.adventure.Adventure;
 import model.adventure.Criteria;
+import model.adventure.FightResult;
 import model.adventure.exception.AdventureRunningException;
+import model.adventure.exception.FightResultException;
 import model.exception.TimeOutException;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -17,9 +19,8 @@ import java.util.List;
 public class GameParser {
     private TanothHttpClient httpClient;
 
-    public GameParser(String user, String password, String loginURI, String serverNumber) throws IOException, InterruptedException {
-        httpClient = new TanothHttpClient(user, password, loginURI, serverNumber);
-        httpClient.login();
+    public GameParser() throws IOException, InterruptedException {
+        httpClient = new TanothHttpClient();
         httpClient.setServerPath(getServerPath());
     }
 
@@ -36,25 +37,12 @@ public class GameParser {
     }
 
     /*
-        Method List:
-        MiniUpdate -> "HeaderUpdate"
-        GetInboxHeaders
-        GetOutboxHeaders
-        GetGuild
-        GetHighscore
-        GetMapDetails
-        GetPvpData
-        GetWorkData
-        MerchItems
-        GetMount
-        GetDungeon
-        GetPremiumData
-        GetParty
-        GetEquipment
-        GetUserAttributes
-        GetChatsecret
-        StartAdventure
-        error
+      Method List:
+      MiniUpdate GetInboxHeaders GetOutboxHeaders
+      GetGuild GetHighscore GetMapDetails GetPvpData
+      GetWorkData MerchItems GetMount GetDungeon
+      GetPremiumData GetParty GetEquipment error
+      GetUserAttributes GetChatsecret StartAdventure
      */
 
     private List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException {
@@ -83,9 +71,10 @@ public class GameParser {
         return adventures;
     }
 
-    public int getInventorySpace() throws IOException, InterruptedException {
+    public int getInventorySpace() throws IOException, InterruptedException, TimeOutException {
         GameAction GameAction = new GameAction.newBuilder("GetEquipment", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
+        if (timeOut(XML)) throw new TimeOutException("[ERROR] Connection Time Out @getInventorySpace");
         Element dataItemsXML = XML.select("array").select("data").first();
         Elements itemsXML = dataItemsXML.children();
         return itemsXML.size(); //Max. Inventory Space is "30" (Hardcoded)
@@ -120,20 +109,32 @@ public class GameParser {
         httpClient.getXMLByAction(GameAction);
     }
 
-    public int getFreeAdventuresPerDay() throws IOException, InterruptedException, AdventureRunningException {
+    public int getFreeAdventuresPerDay() throws IOException, InterruptedException, AdventureRunningException, FightResultException {
         GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML))
             throw new AdventureRunningException("[ERROR] Quest Running @GettingFreeAdventuresPerDay");
+        else if (isFightResult(XML))
+            throw new FightResultException("[ERROR] Getting Fight Result @GettingAdventuresMadeToday");
         return Integer.parseInt(XML.getElementsContainingOwnText("free_adventures_per_day").first().parent().select("i4").text());
     }
 
-    public int getAdventuresMadeToday() throws IOException, InterruptedException, AdventureRunningException {
+    public int getAdventuresMadeToday() throws IOException, InterruptedException, AdventureRunningException, FightResultException {
         GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
         if (isActiveAdventure(XML))
             throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventuresMadeToday");
+        else if (isFightResult(XML))
+            throw new FightResultException("[ERROR] Getting Fight Result @GettingAdventuresMadeToday");
         return Integer.parseInt(XML.getElementsContainingOwnText("adventures_made_today").first().parent().select("i4").text());
+    }
+
+    public FightResult getFightResult() throws AdventureRunningException, IOException, InterruptedException {
+        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
+        if (isActiveAdventure(XML))
+            throw new AdventureRunningException("[ERROR] Quest Running @GettingFreeAdventuresPerDay");
+        return new FightResult();
     }
 
     private boolean timeOut(Document XML) {
@@ -142,6 +143,10 @@ public class GameParser {
 
     private boolean isActiveAdventure(Document XML) {
         return XML.getElementsContainingOwnText("running_adventure_id").size() > 0;
+    }
+
+    private boolean isFightResult(Document XML) {
+        return XML.getElementsContainingOwnText("fight_result").size() > 0;
     }
 
     public void reconnect() throws IOException, InterruptedException {

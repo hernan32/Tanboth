@@ -31,8 +31,8 @@ public class TanothGUI extends Application {
     }
 
     @Override
-    public void start(final Stage primaryStage) throws IOException {
-        stage = primaryStage;
+    public void start(final Stage stage) throws IOException {
+        this.stage = stage;
         fxmlLoader = new FXMLLoader(getClass().getResource("/view/resources/fxml/TanothGUI.fxml"));
         Parent root = fxmlLoader.load();
         root.setOnMousePressed(event -> {
@@ -40,21 +40,23 @@ public class TanothGUI extends Application {
             yOffset = event.getSceneY();
         });
         root.setOnMouseDragged(event -> {
-            primaryStage.setX(event.getScreenX() - xOffset);
-            primaryStage.setY(event.getScreenY() - yOffset);
+            stage.setX(event.getScreenX() - xOffset);
+            stage.setY(event.getScreenY() - yOffset);
         });
         Platform.setImplicitExit(false);
         SwingUtilities.invokeLater(this::addAppToTray);
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
         //set Stage boundaries to the lower right corner of the visible bounds of the main screen
-        stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
-        stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 260);
+        this.stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
+        this.stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 260);
         Scene scene = new Scene(root, 500, 265);
+        javafx.scene.image.Image icon = new javafx.scene.image.Image(this.getClass().getResourceAsStream("/view/resources/images/tanothicon.png"));
+        stage.getIcons().add(icon);
         scene.getRoot().requestFocus();
-        primaryStage.setTitle("Tanboth");
-        primaryStage.initStyle(StageStyle.UNDECORATED);
-        primaryStage.setScene(scene);
-        primaryStage.setResizable(false);
+        stage.setTitle("Tanboth");
+        stage.initStyle(StageStyle.UNDECORATED);
+        stage.setScene(scene);
+        stage.setResizable(false);
     }
 
     /**
@@ -73,7 +75,7 @@ public class TanothGUI extends Application {
 
             // set up a system tray icon.
             tray = SystemTray.getSystemTray();
-            Image image = ImageIO.read(this.getClass().getResource("/view/resources/images/tanothico.png"));
+            Image image = ImageIO.read(this.getClass().getResource("/images/tanothtrayicon.png"));
             trayIcon = new TrayIcon(image);
 
             // if the user double-clicks on the tray icon, show the main app stage.
