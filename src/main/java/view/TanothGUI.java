@@ -33,7 +33,7 @@ public class TanothGUI extends Application {
     @Override
     public void start(final Stage stage) throws IOException {
         this.stage = stage;
-        fxmlLoader = new FXMLLoader(getClass().getResource("/view/resources/fxml/TanothGUI.fxml"));
+        fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/TanothGUI.fxml"));
         Parent root = fxmlLoader.load();
         root.setOnMousePressed(event -> {
             xOffset = event.getSceneX();
@@ -50,7 +50,7 @@ public class TanothGUI extends Application {
         this.stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
         this.stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 260);
         Scene scene = new Scene(root, 500, 265);
-        javafx.scene.image.Image icon = new javafx.scene.image.Image(this.getClass().getResourceAsStream("/view/resources/images/tanothicon.png"));
+        javafx.scene.image.Image icon = new javafx.scene.image.Image(this.getClass().getResourceAsStream("/images/tanothicon.png"));
         stage.getIcons().add(icon);
         scene.getRoot().requestFocus();
         stage.setTitle("Tanboth");

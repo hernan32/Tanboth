@@ -78,4 +78,6 @@ fabric.properties
 Tanboth.iml
 target/
 /.idea/
-
+/src/main/java/view/resources/config/config.properties
+src/test/
+/dependency-reduced-pom.xml

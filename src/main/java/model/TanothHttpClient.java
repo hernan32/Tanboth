@@ -22,7 +22,7 @@ public class TanothHttpClient {
     public TanothHttpClient() throws IOException, InterruptedException {
         Properties prop = new Properties();
         String propFileName = "config.properties";
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("config/" + propFileName);
+        InputStream inputStream = getClass().getResourceAsStream("/config/" + propFileName);
         if (inputStream != null) {
             prop.load(inputStream);
         }

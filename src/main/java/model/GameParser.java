@@ -20,8 +20,8 @@ public class GameParser {
     private TanothHttpClient httpClient;
 
     public GameParser() throws IOException, InterruptedException {
-        httpClient = new TanothHttpClient();
-        httpClient.setServerPath(getServerPath());
+        this.httpClient = new TanothHttpClient();
+        this.httpClient.setServerPath(getServerPath());
     }
 
     private String getServerPath() {
