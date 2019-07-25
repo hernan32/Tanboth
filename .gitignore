@@ -4,10 +4,8 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
-.idea/**/workspace.xml
 .idea/**/tasks.xml
 .idea/**/usage.statistics.xml
-.idea/**/dictionaries
 .idea/**/shelf
 
 # Generated files
@@ -19,7 +17,6 @@
 .idea/**/dataSources.local.xml
 .idea/**/sqlDataSources.xml
 .idea/**/dynamic.xml
-.idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
 
 # Gradle
@@ -70,14 +67,9 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 .gitignore
-.idea/compiler.xml
-.idea/misc.xml
-.idea/uiDesigner.xml
-.idea/vcs.xml
-.idea/workspace.xml
 Tanboth.iml
 target/
 /.idea/
-/src/main/java/view/resources/config/config.properties
 src/test/
 /dependency-reduced-pom.xml
+/src/main/java/view/resources/config/config.properties
