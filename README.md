@@ -24,6 +24,10 @@ You need to set the `JAVA_HOME` environment variable to a JDK 11 installation di
 https://www.baeldung.com/java-home-on-windows-7-8-10-mac-os-x-linux
 ```
 
+## Deployment
+Soon
+
+
 ## Built With
 
 * [Maven](https://maven.apache.org/) - Dependency Management
@@ -33,11 +37,37 @@ https://www.baeldung.com/java-home-on-windows-7-8-10-mac-os-x-linux
 * [MinLog](https://github.com/EsotericSoftware/minlog) - Java logging
 * [AWT/SystemTray](https://gist.github.com/jewelsea/e231e89e8d36ef4e5d8a) - System Tray (AWT) to control a JavaFX application
 * [Java HTTP Client](https://openjdk.java.net/groups/net/httpclient/intro.html) - Tanoth HTTP Protocol
-* [GitHub](https://github.com/) - Hosting/Versioning
 
 ## Versioning
 
-We use [GitHub](https://github.com/) for versioning. For the versions available, see the [tags on this repository](https://github.com/hernan32/Tanboth). 
+We use [GitHub](https://github.com/) for versioning. For the versions available, see the [tags on this repository](https://github.com/hernan32/Tanboth).
+
+## Running
+
+Executing JAR File with Console
+```
+java -jar Tanboth-1.0.jar
+``` 
+Executing JAR File with Console-less
+```
+javaw -jar Tanboth-1.0.jar
+``` 
+Requisites EXE File
+```
+JRE 1.8 - https://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+``` 
+
+## Configuration
+
+Add ``config.properties`` in the same folder with the following content
+```
+user=UserAccount
+password=YourPassword
+serverURL=https://s1-es.tanoth.gameforge.com/user/login/
+serverNumber=1
+``` 
+> Doing this way the program is going to read the file (external) that you created instead from the *JAR package* (Override). Skip this step if already was configured before compiling. 
+ 
 
 ## Authors
 
@@ -48,3 +78,11 @@ We use [GitHub](https://github.com/) for versioning. For the versions available,
 * [Jewelsea](https://gist.github.com/jewelsea) - JavaFX/AWT Tray Icon / JavaFX Threading
 * Emi - OOP Recommendations / Exception Management
 * Ale - OOP Recommendations / Double Dispatch Implementation
+
+## To Do List
+
+* Auto-Start Option
+* Test deployment @zero
+* Auto sell non epic items
+* Auto asign stats
+* Auto dungeon
