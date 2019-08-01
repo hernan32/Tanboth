@@ -1,6 +1,7 @@
 package controller;
 
 import com.esotericsoftware.minlog.Log;
+import configuration.ConfigurationSingleton;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -27,6 +28,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class TanothGUIController {
     private GameParser game;
+    LocalTime refreshTime = LocalTime.parse("19:00:00");
     //FXML
     @FXML
     private TextArea fxMainTextArea;
@@ -44,12 +46,14 @@ public class TanothGUIController {
     private int sleep = 60; //Seconds
     private boolean questStarted = false;
 
-    enum Status {
+    private enum Status {
         STARTED, STOPPED
     }
 
     public TanothGUIController() throws IOException, InterruptedException {
         game = new GameParser();
+        if (ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.debugMode).equals("OFF"))
+            Log.set(Log.LEVEL_NONE);
     }
 
     private Task questChecker = new Task() {
@@ -186,15 +190,16 @@ public class TanothGUIController {
 
     private int getSecondsToNextQuestRefresh() {
         LocalTime timeNow = LocalTime.now();
-        LocalTime refreshTime = LocalTime.parse("19:00:00");
         int secondsRefresh;
         Log.info(Boolean.toString(timeNow.isBefore(refreshTime)));
         if (timeNow.isBefore(refreshTime)) {
             secondsRefresh = (int) SECONDS.between(timeNow, refreshTime) + 120;
         } else {
-            secondsRefresh = (int) Math.abs(SECONDS.between(timeNow, LocalTime.parse("23:59:59"))) + (19 * 60 * 60) + 120;
+            secondsRefresh = (int) Math.abs(SECONDS.between(timeNow, LocalTime.parse("23:59:59"))) + refreshTime.toSecondOfDay() + 120;
+
         }
         return secondsRefresh;
     }
+
 
 }

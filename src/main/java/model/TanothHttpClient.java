@@ -1,14 +1,14 @@
 package model;
 
+import configuration.ConfigurationSingleton;
+
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Properties;
 
 public class TanothHttpClient {
     private String server;
@@ -19,17 +19,12 @@ public class TanothHttpClient {
     private HttpClient httpClient;
     private String loginResponse;
 
+
     public TanothHttpClient() throws IOException, InterruptedException {
-        Properties prop = new Properties();
-        String propFileName = "config.properties";
-        InputStream inputStream = getClass().getResourceAsStream("/config/" + propFileName);
-        if (inputStream != null) {
-            prop.load(inputStream);
-        }
-        loginURI = prop.getProperty("serverURL");
-        user = prop.getProperty("user");
-        password = prop.getProperty("password");
-        server = prop.getProperty("serverNumber");
+        loginURI = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.serverURL);
+        user = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.user);
+        password = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.password);
+        server = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.serverNumber);
 
         httpClient = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())
