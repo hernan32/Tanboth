@@ -21,10 +21,10 @@ public class TanothHttpClient {
 
 
     public TanothHttpClient() throws IOException, InterruptedException {
-        loginURI = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.serverURL);
-        user = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.user);
-        password = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.password);
-        server = ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.serverNumber);
+        loginURI = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.serverURL);
+        user = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.user);
+        password = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.password);
+        server = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.serverNumber);
 
         httpClient = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())

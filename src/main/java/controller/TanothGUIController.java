@@ -28,7 +28,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class TanothGUIController {
     private GameParser game;
-    LocalTime refreshTime = LocalTime.parse("19:00:00");
+    private LocalTime refreshTime = LocalTime.parse(ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.resetTime));
     //FXML
     @FXML
     private TextArea fxMainTextArea;
@@ -52,7 +52,7 @@ public class TanothGUIController {
 
     public TanothGUIController() throws IOException, InterruptedException {
         game = new GameParser();
-        if (ConfigurationSingleton.getProperty(ConfigurationSingleton.Property.debugMode).equals("OFF"))
+        if (ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.debugMode).equals("OFF"))
             Log.set(Log.LEVEL_NONE);
     }
 
