@@ -1,9 +1,9 @@
-package model.adventure.criterias;
+package model.adventure_parser.adventure.criterias;
 
-import model.adventure.Adventure;
-import model.adventure.Criteria;
+import model.adventure_parser.adventure.Adventure;
+import model.adventure_parser.adventure.AdventureCriteria;
 
-public class TimeCriteria extends Criteria {
+public class TimeCriteria extends AdventureCriteria {
     public Adventure getBestFor(Adventure localAdventure, Adventure parameterAdventure) {
         if (localAdventure.getDuration() > parameterAdventure.getDuration()) {
             return parameterAdventure;

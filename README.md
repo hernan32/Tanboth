@@ -1,6 +1,12 @@
-# Tanboth 1.0
+# Tanboth 2.0
 
-Bot for the game called "Tanoth" (by GameForge) made in Java. It has the functionality to make quest automatically and shows the general state of the character.
+Bot for the game called "Tanoth" (by GameForge) made in Java.
+ 
+##### Functions:
+* Auto Quest
+* Auto Add Stats
+* Auto Dungeon (Soon)
+* Auto Illusion Cave (Soon)
 
 ## Getting Started
 
@@ -31,7 +37,7 @@ Soon
 ## Built With
 
 * [Maven](https://maven.apache.org/) - Dependency Management
-* [JavaFX](https://openjfx.io/) - Used to generate GUI
+* [JavaFX](https://openjfx.io/) - GUI
 * [Jsoup](https://jsoup.org/) - Game parsing
 * [Apache Commons Lang](https://jsoup.org/) - Game parsing supplement/helper
 * [MinLog](https://github.com/EsotericSoftware/minlog) - Java logging
@@ -40,7 +46,7 @@ Soon
 
 ## Versioning
 
-We use [GitHub](https://github.com/) for versioning. For the versions available, see the [tags on this repository](https://github.com/hernan32/Tanboth).
+We use [GitHub](https://github.com/) for versioning. For the versions available, see the [check this.](https://github.com/hernan32/Tanboth)
 
 ## Running
 
@@ -85,6 +91,8 @@ debugMode=OFF
 
 * Auto-Start Option
 * Test deployment @zero
-* Auto sell non epic items
-* Auto asign stats
-* Auto dungeon
+* Bot class specification by configuration (inheritance)
+
+## Bugs
+
+* Tutorial/Help

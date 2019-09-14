@@ -10,12 +10,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 import model.GameParser;
-import model.adventure.Adventure;
-import model.adventure.Criteria;
-import model.adventure.criterias.TimeCriteria;
-import model.adventure.exception.AdventureRunningException;
-import model.adventure.exception.FightResultException;
+import model.adventure_parser.AdventureParser;
+import model.adventure_parser.adventure.Adventure;
+import model.adventure_parser.adventure.AdventureCriteria;
+import model.adventure_parser.adventure.criterias.TimeCriteria;
+import model.adventure_parser.adventure.exception.AdventureRunningException;
+import model.adventure_parser.adventure.exception.FightResultException;
+import model.adventure_parser.adventure.exception.IllusionCaveRunningException;
+import model.adventure_parser.adventure.exception.IllusionDisabledException;
+import model.equipment_parser.EquipmentParser;
 import model.exception.TimeOutException;
+import model.user_parser.UserParser;
 
 import java.awt.*;
 import java.io.IOException;
@@ -27,8 +32,14 @@ import java.util.concurrent.TimeUnit;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class TanothGUIController {
-    private GameParser game;
+    private GameParser gameParser;
+    private AdventureParser adventureParser;
+    private EquipmentParser equipmentParser;
+    private UserParser userParser;
     private LocalTime refreshTime = LocalTime.parse(ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.resetTime));
+    private boolean autoSell = Boolean.parseBoolean(ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.autoSellItems));
+    private boolean sellEpics = Boolean.parseBoolean(ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.sellEpics));
+    private boolean autoIncreaseStats = Boolean.parseBoolean(ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.autoIncreaseStats));
     //FXML
     @FXML
     private TextArea fxMainTextArea;
@@ -43,6 +54,7 @@ public class TanothGUIController {
     private int adventuresMade;
     private int freeAdventures;
     private int inventorySpaces;
+    private int bossMapMade;
     private int sleep = 60; //Seconds
     private boolean questStarted = false;
 
@@ -51,12 +63,15 @@ public class TanothGUIController {
     }
 
     public TanothGUIController() throws IOException, InterruptedException {
-        game = new GameParser();
+        gameParser = new GameParser();
+        adventureParser = gameParser.getAdventureParser();
+        equipmentParser = gameParser.getEquipmentParser();
+        userParser = gameParser.getUserParser();
         if (ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.debugMode).equals("OFF"))
             Log.set(Log.LEVEL_NONE);
     }
 
-    private Task questChecker = new Task() {
+    private Task botTask = new Task() {
         @Override
         protected Object call() throws Exception {
             String status;
@@ -64,6 +79,10 @@ public class TanothGUIController {
                 Log.warn("------------- > Loop Start");
                 Log.info("Collecting Data...");
                 collectData();
+                if (autoIncreaseStats) {
+                    userParser.increaseStats();
+                    Log.info("Increasing Stats: Done.");
+                }
                 if (!questStarted) {
                     Log.info("Stopped == TRUE");
                     if (adventuresMade < freeAdventures) {
@@ -74,6 +93,10 @@ public class TanothGUIController {
                         sleep = getSecondsToNextQuestRefresh();
                         Log.info("adventuresMade < freeAdventures == FALSE  -> Restarting at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(sleep)));
                         status = "No free quest available. Restarting at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(sleep));
+                        if (bossMapMade == 0) {
+                            adventureParser.startIllusionCave();
+                            Log.info("Starting Boss Fights: Done");
+                        }
                     }
                 } else status = "Adventure already running. Waiting for stop. Refreshing... ";
                 this.updateMessage(status + " (" + sleep + " Seconds)");
@@ -88,37 +111,49 @@ public class TanothGUIController {
     @FXML
     public void initialize() {
         fxTray.setDefaultButton(false);
-        Thread questCheckerThread = new Thread(questChecker);
-        fxStatus.textProperty().bind(questChecker.messageProperty());
-        questCheckerThread.start();
+        Thread botThread = new Thread(botTask);
+        fxStatus.textProperty().bind(botTask.messageProperty());
+        botThread.start();
     }
 
     private void collectData() throws IOException, InterruptedException {
         try {
             if (questStarted) {
-                game.getFightResult();
+                adventureParser.getFightResult();
+                Log.info("Getting Fight Result: Done.");
             }
-            inventorySpaces = game.getInventorySpace();
+            try {
+                bossMapMade = adventureParser.getBossMapMadeToday();
+                Log.info("Getting Boss Map Made: Done.");
+            } catch (IllusionDisabledException e) {
+                Log.info(e.getMessage());
+                bossMapMade = -1;
+            }
+            inventorySpaces = equipmentParser.getInventorySpace();
             Log.info("Getting Inventory Space: Done.");
-            adventuresMade = game.getAdventuresMadeToday();
+            adventuresMade = adventureParser.getAdventuresMadeToday();
             Log.info("Getting Adventures Made: Done.");
-            freeAdventures = game.getFreeAdventuresPerDay();
+            freeAdventures = adventureParser.getFreeAdventuresPerDay();
             Log.info("Getting Free Adventures: Done.");
             questStarted = false;
-            setMainContentText(adventuresMade, freeAdventures, inventorySpaces, Status.STOPPED.toString());
-            Log.info("[Quest: " + adventuresMade + " / " + freeAdventures + "] [Spaces: " + inventorySpaces + "] [Status: " + Status.STOPPED.toString() + "]");
+            setMainContentText(adventuresMade, freeAdventures, bossMapMade, inventorySpaces, Status.STOPPED.toString());
+            Log.info("[Quest: " + adventuresMade + " / " + freeAdventures + "] [Boss Map: " + bossMapMade + "/1] [Spaces: " + inventorySpaces + "] [Status: " + Status.STOPPED.toString() + "]");
         } catch (AdventureRunningException ex) {
             freeAdventures = -1;
             adventuresMade = -1;
             questStarted = true;
-            Log.info("[Quest: " + adventuresMade + " / " + freeAdventures + "] [Spaces: " + inventorySpaces + "] [Status: " + Status.STARTED.toString() + "]");
+            Log.info("[Quest: " + adventuresMade + " / " + freeAdventures + "] [Boss Map: " + bossMapMade + "/1] [Spaces: " + inventorySpaces + "] [Status: " + Status.STARTED.toString() + "]");
             setMainContentText("Can't get information when - Quest Running -");
         } catch (TimeOutException ex) {
+            Log.info(ex.getMessage());
             setMainContentText("Time Out. Reconnecting...");
             Log.warn("Time Out. Reconnecting...");
-            game.reconnect();
+            gameParser.reconnect();
             collectData();
         } catch (FightResultException ex) {
+            Log.info(ex.getMessage());
+            collectData();
+        } catch (IllusionCaveRunningException ex) {
             Log.info(ex.getMessage());
         }
     }
@@ -126,8 +161,12 @@ public class TanothGUIController {
     private void startBot() throws IOException, InterruptedException {
         Adventure activeAdventure;
         try {
-            Criteria criteria = new TimeCriteria();
-            activeAdventure = game.startAdventureByCriteria(criteria);
+            if (autoSell) {
+                equipmentParser.sellItemsFromInventory(sellEpics);
+                Log.info("Selling Items (Epic: " + sellEpics + "): Done.");
+            }
+            AdventureCriteria adventureCriteria = new TimeCriteria();
+            activeAdventure = adventureParser.startAdventureByCriteria(adventureCriteria);
             questStarted = true;
             String questDescription = "[Difficulty: " + activeAdventure.getDifficulty() + " / " +
                     "Duration: " + activeAdventure.getDuration() + " / " +
@@ -137,7 +176,7 @@ public class TanothGUIController {
                     "Quest ID: " + activeAdventure.getQuestID() + " / " +
                     "Finishing at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(activeAdventure.getDuration())) + "]";
 
-            setMainContentText(adventuresMade + 1, freeAdventures, inventorySpaces, questDescription);
+            setMainContentText(adventuresMade + 1, freeAdventures, bossMapMade, inventorySpaces, questDescription);
             sleep = activeAdventure.getDuration() + 20; // 20 Sec. Delay
 
         } catch (AdventureRunningException ex) {
@@ -146,14 +185,17 @@ public class TanothGUIController {
         } catch (TimeOutException ex) {
             setMainContentText("Time Out. Reconnecting...");
             Log.warn("Reconnecting...");
-            game.reconnect();
+            gameParser.reconnect();
             startBot();
+        } catch (IllusionCaveRunningException | FightResultException ex) {
+            ex.printStackTrace();
         }
     }
 
-    private void setMainContentText(int adventuresMade, int freeAdventures, int inventorySpaces, String questStatus) {
+    private void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces, String questStatus) {
         //Controller
         String mainContentText = "Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
+                "Today Boss Map: " + bossMapMade + " / " + 1 + "\n" +
                 "Free Inventory Spaces: " + inventorySpaces + "\n" +
                 "Adventure Status: " + questStatus;
         setTextArea(mainContentText);
@@ -174,7 +216,7 @@ public class TanothGUIController {
     private void closeProgram() {
         Platform.exit();
         tray.remove(trayIcon);
-        questChecker.cancel();
+        botTask.cancel();
     }
 
     @FXML
@@ -191,7 +233,7 @@ public class TanothGUIController {
     private int getSecondsToNextQuestRefresh() {
         LocalTime timeNow = LocalTime.now();
         int secondsRefresh;
-        Log.info(Boolean.toString(timeNow.isBefore(refreshTime)));
+        Log.info("Actual Time is Before Refresh Time: " + Boolean.toString(timeNow.isBefore(refreshTime)));
         if (timeNow.isBefore(refreshTime)) {
             secondsRefresh = (int) SECONDS.between(timeNow, refreshTime) + 120;
         } else {

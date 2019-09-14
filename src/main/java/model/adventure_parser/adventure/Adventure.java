@@ -1,4 +1,4 @@
-package model.adventure;
+package model.adventure_parser.adventure;
 
 public class Adventure {
     private int difficulty;
@@ -45,7 +45,7 @@ public class Adventure {
         return c.getValueFor(this);
     }*/
 
-    public Adventure getBest(Criteria c, Adventure adventure) {
+    public Adventure getBest(AdventureCriteria c, Adventure adventure) {
         return c.getBestFor(this, adventure);
     }
 

@@ -1,4 +1,4 @@
-package model.adventure;
+package model.adventure_parser.adventure;
 
 public class FightResult {
     private int fame;

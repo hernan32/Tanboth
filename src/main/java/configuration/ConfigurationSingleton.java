@@ -14,7 +14,7 @@ public class ConfigurationSingleton {
     private static ConfigurationSingleton INSTANCE;
 
     public enum Property {
-        serverURL, user, password, serverNumber, resetTime, debugMode
+        serverURL, user, password, serverNumber, resetTime, debugMode, autoSellItems, sellEpics, autoIncreaseStats
     }
 
     private ConfigurationSingleton() throws IOException {

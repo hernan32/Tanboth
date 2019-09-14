@@ -1,155 +1,47 @@
 package model;
 
-import model.adventure.Adventure;
-import model.adventure.Criteria;
-import model.adventure.FightResult;
-import model.adventure.exception.AdventureRunningException;
-import model.adventure.exception.FightResultException;
-import model.exception.TimeOutException;
-import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import model.adventure_parser.AdventureParser;
+import model.equipment_parser.EquipmentParser;
+import model.user_parser.UserParser;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class GameParser {
-    private TanothHttpClient httpClient;
-
-    public GameParser() throws IOException, InterruptedException {
-        this.httpClient = new TanothHttpClient();
-        this.httpClient.setServerPath(getServerPath());
-    }
-
-    private String getServerPath() {
-        Document doc = Jsoup.parse(httpClient.getLoginResponse());
-        Element scriptData = doc.select("body").select("script").get(0);
-        return StringUtils.substringBetween(scriptData.toString(), "serverpath: \"", "\",");
-    }
-
-    private String getSessionID() {
-        Document doc = Jsoup.parse(httpClient.getLoginResponse());
-        Element scriptData = doc.select("body").select("script").get(0);
-        return StringUtils.substringBetween(scriptData.toString(), "sessionID: \"", "\",");
-    }
+    private TanothHttpClientSingleton httpClient;
+    private AdventureParser adventureParser;
+    private UserParser userParser;
+    private EquipmentParser equipmentParser;
 
     /*
       Method List:
-      MiniUpdate GetInboxHeaders GetOutboxHeaders
-      GetGuild GetHighscore GetMapDetails GetPvpData
-      GetWorkData MerchItems GetMount GetDungeon
-      GetPremiumData GetParty GetEquipment error
-      GetUserAttributes GetChatsecret StartAdventure
+      MiniUpdate GetInboxHeaders GetOutboxHeaders SellItem
+      GetGuild GetHighscore GetMapDetails GetPvpData MoveItem
+      GetWorkData MerchItems GetMount GetDungeon StartIllusionCave
+      GetPremiumData GetParty GetEquipment error RaiseAttribute
+      GetUserAttributes GetChatsecret StartAdventure GetAdventures
      */
 
-    private List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException {
-        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
-        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventures");
-        List<Adventure> adventures = new ArrayList<>();
-        Adventure adventure;
-        Elements adventuresXML = XML.select("array").select("struct");
-        int difficulty, duration, experience, fightChance, gold, questID;
-
-        for (Element adventureXML : adventuresXML) {
-            Elements adventureParametersXML = adventureXML.select("i4");
-
-            difficulty = Integer.parseInt(adventureParametersXML.get(0).text());
-            duration = Integer.parseInt(adventureParametersXML.get(1).text());
-            experience = Integer.parseInt(adventureParametersXML.get(2).text());
-            fightChance = Integer.parseInt(adventureParametersXML.get(3).text());
-            gold = Integer.parseInt(adventureParametersXML.get(4).text());
-            questID = Integer.parseInt(adventureParametersXML.get(5).text());
-
-            adventure = new Adventure(difficulty, duration, experience, fightChance, gold, questID);
-            adventures.add(adventure);
-        }
-
-        return adventures;
+    public GameParser() throws IOException, InterruptedException {
+        httpClient = TanothHttpClientSingleton.getInstance();
+        adventureParser = new AdventureParser(httpClient);
+        userParser = new UserParser(httpClient);
+        equipmentParser = new EquipmentParser(httpClient);
     }
 
-    public int getInventorySpace() throws IOException, InterruptedException, TimeOutException {
-        GameAction GameAction = new GameAction.newBuilder("GetEquipment", getSessionID()).build();
-        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        if (timeOut(XML)) throw new TimeOutException("[ERROR] Connection Time Out @getInventorySpace");
-        Element dataItemsXML = XML.select("array").select("data").first();
-        Elements itemsXML = dataItemsXML.children();
-        return itemsXML.size(); //Max. Inventory Space is "30" (Hardcoded)
+    public UserParser getUserParser() {
+        return userParser;
     }
 
-    public Adventure startAdventureByCriteria(Criteria criteria) throws InterruptedException, AdventureRunningException, IOException, TimeOutException {
-        List<Adventure> AdventureList;
-        Adventure adventureByCriteria = new Adventure(Integer.MAX_VALUE, Integer.MAX_VALUE, 0, Integer.MAX_VALUE, 0, 0);
-        try {
-            AdventureList = getAdventures();
-            for (Adventure adventure : AdventureList) {
-                if (adventure.getDifficulty() != 2)
-                    adventureByCriteria = adventure.getBest(criteria, adventureByCriteria); // =2 Hardest
-            }
-            startAdventure(adventureByCriteria);
-        } catch (AdventureRunningException ex) {
-            throw new AdventureRunningException(ex.getMessage());
-        } catch (TimeOutException ex) {
-            throw new TimeOutException(ex.getMessage());
-        }
-        return adventureByCriteria;
+    public AdventureParser getAdventureParser() {
+        return adventureParser;
     }
 
-    private void startAdventure(Adventure adventure) throws IOException, InterruptedException, AdventureRunningException, TimeOutException {
-        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
-        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        if (isActiveAdventure(XML)) throw new AdventureRunningException("[ERROR] Quest Running @StartingQuest");
-        else if (timeOut(XML)) throw new TimeOutException("[ERROR] Connection Time Out @StartingQuest");
-        GameAction = new GameAction.newBuilder("StartAdventure", getSessionID())
-                .addParameter(adventure.getQuestID())
-                .build();
-        httpClient.getXMLByAction(GameAction);
-    }
-
-    public int getFreeAdventuresPerDay() throws IOException, InterruptedException, AdventureRunningException, FightResultException {
-        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
-        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        if (isActiveAdventure(XML))
-            throw new AdventureRunningException("[ERROR] Quest Running @GettingFreeAdventuresPerDay");
-        else if (isFightResult(XML))
-            throw new FightResultException("[ERROR] Getting Fight Result @GettingAdventuresMadeToday");
-        return Integer.parseInt(XML.getElementsContainingOwnText("free_adventures_per_day").first().parent().select("i4").text());
-    }
-
-    public int getAdventuresMadeToday() throws IOException, InterruptedException, AdventureRunningException, FightResultException {
-        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
-        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        if (isActiveAdventure(XML))
-            throw new AdventureRunningException("[ERROR] Quest Running @GettingAdventuresMadeToday");
-        else if (isFightResult(XML))
-            throw new FightResultException("[ERROR] Getting Fight Result @GettingAdventuresMadeToday");
-        return Integer.parseInt(XML.getElementsContainingOwnText("adventures_made_today").first().parent().select("i4").text());
-    }
-
-    public FightResult getFightResult() throws AdventureRunningException, IOException, InterruptedException {
-        GameAction GameAction = new GameAction.newBuilder("GetAdventures", getSessionID()).build();
-        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        if (isActiveAdventure(XML))
-            throw new AdventureRunningException("[ERROR] Quest Running @GettingFreeAdventuresPerDay");
-        return new FightResult();
-    }
-
-    private boolean timeOut(Document XML) {
-        return XML.getElementsContainingOwnText("no_valid_session").size() > 0;
-    }
-
-    private boolean isActiveAdventure(Document XML) {
-        return XML.getElementsContainingOwnText("running_adventure_id").size() > 0;
-    }
-
-    private boolean isFightResult(Document XML) {
-        return XML.getElementsContainingOwnText("fight_result").size() > 0;
+    public EquipmentParser getEquipmentParser() {
+        return equipmentParser;
     }
 
     public void reconnect() throws IOException, InterruptedException {
         httpClient.login();
     }
 }
+

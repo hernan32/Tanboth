@@ -10,36 +10,61 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
-public class TanothHttpClient {
-    private String server;
-    private String serverPath;
+public class TanothHttpClientSingleton {
+    private String serverNumber;
     private String user;
     private String password;
     private String loginURI;
     private HttpClient httpClient;
     private String loginResponse;
+    private static TanothHttpClientSingleton INSTANCE;
+    private static String SERVER_PATH;
+    private static String SESSION_ID;
 
-
-    public TanothHttpClient() throws IOException, InterruptedException {
+    private TanothHttpClientSingleton() throws IOException, InterruptedException {
         loginURI = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.serverURL);
         user = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.user);
         password = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.password);
-        server = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.serverNumber);
+        serverNumber = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.serverNumber);
 
         httpClient = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
-        login();
+        connect();
+    }
+
+    public static TanothHttpClientSingleton getInstance() throws IOException, InterruptedException {
+        if (INSTANCE == null) {
+            INSTANCE = new TanothHttpClientSingleton();
+            setSessionData();
+        }
+        return INSTANCE;
+    }
+
+    private static void setSessionData() {
+        FlashVarsParser flashVars = new FlashVarsParser(INSTANCE);
+        SERVER_PATH = flashVars.getServerPath();
+        SESSION_ID = flashVars.getSessionID();
+    }
+
+
+    public static String getSessionId() {
+        return SESSION_ID;
     }
 
     public void login() throws IOException, InterruptedException {
+        connect();
+        setSessionData();
+    }
+
+    public void connect() throws IOException, InterruptedException {
         HttpRequest loginRequest = HttpRequest.newBuilder()
                 .uri(URI.create(loginURI))
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .timeout(Duration.ofMinutes(1))
-                .POST(HttpRequest.BodyPublishers.ofString("server=" + server + "&username=" + user + "&userpass=" + password))
+                .POST(HttpRequest.BodyPublishers.ofString("server=" + serverNumber + "&username=" + user + "&userpass=" + password))
                 .build();
         loginResponse = httpClient.send(loginRequest, HttpResponse.BodyHandlers.ofString()).body();
     }
@@ -48,13 +73,13 @@ public class TanothHttpClient {
         return loginResponse;
     }
 
-    public void setServerPath(String serverPath) {
-        this.serverPath = serverPath;
+    public String getSessionID() {
+        return SESSION_ID;
     }
 
     public String getXMLByAction(GameAction GAR) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(serverPath))
+                .uri(URI.create(SERVER_PATH))
                 .header("Content-Type", "text/xml")
                 .timeout(Duration.ofMinutes(1))
                 .POST(HttpRequest.BodyPublishers.ofString(GAR.getRequest()))
