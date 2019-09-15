@@ -73,6 +73,9 @@ serverURL=https://s1-es.tanoth.gameforge.com/user/login/
 serverNumber=1
 resetTime=19:00:00
 debugMode=OFF
+autoSellItems=false
+sellEpics=false
+autoIncreaseStats=false
 ``` 
 > Doing this way the program is going to read the file (external) that you created instead from the *JAR package* (Override). Skip this step if already was configured before compiling. 
  

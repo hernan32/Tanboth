@@ -98,6 +98,9 @@
             <resource>
                 <directory>src/main/java/view/resources</directory>
             </resource>
+            <resource>
+                <directory>src/main/java/configuration/resources</directory>
+            </resource>
         </resources>
         <plugins>
             <plugin>
