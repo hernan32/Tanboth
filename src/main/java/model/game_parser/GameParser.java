@@ -1,8 +1,10 @@
-package model;
+package model.game_parser;
 
-import model.adventure_parser.AdventureParser;
-import model.equipment_parser.EquipmentParser;
-import model.user_parser.UserParser;
+import model.TanothHttpClientSingleton;
+import model.game_parser.adventure_parser.AdventureParser;
+import model.game_parser.equipment_parser.EquipmentParser;
+import model.game_parser.game.GameAttributes;
+import model.game_parser.user_parser.UserParser;
 
 import java.io.IOException;
 
@@ -42,6 +44,10 @@ public class GameParser {
 
     public void reconnect() throws IOException, InterruptedException {
         httpClient.login();
+    }
+
+    public GameAttributes getGameAttributes() {
+        return new GameAttributes();
     }
 }
 

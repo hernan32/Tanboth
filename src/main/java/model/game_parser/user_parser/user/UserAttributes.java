@@ -1,4 +1,4 @@
-package model.user_parser.user;
+package model.game_parser.user_parser.user;
 
 public class UserAttributes {
     public int getGold() {

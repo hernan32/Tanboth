@@ -1,12 +1,12 @@
-package model.equipment_parser.item;
+package model.game_parser.equipment_parser.item;
 
-public class Item {
+public class ItemAttributes {
     private int id;
     private boolean isEquipped;
     private boolean isUnique;
     private int screenX;
 
-    public Item(int id, boolean isEquipped, boolean isUnique, int screenX) {
+    public ItemAttributes(int id, boolean isEquipped, boolean isUnique, int screenX) {
         this.id = id;
         this.isEquipped = isEquipped;
         this.isUnique = isUnique;

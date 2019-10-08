@@ -30,10 +30,6 @@ You need to set the `JAVA_HOME` environment variable to a JDK 11 installation di
 https://www.baeldung.com/java-home-on-windows-7-8-10-mac-os-x-linux
 ```
 
-## Deployment
-Soon
-
-
 ## Built With
 
 * [Maven](https://maven.apache.org/) - Dependency Management
@@ -89,13 +85,3 @@ autoIncreaseStats=false
 * [Jewelsea](https://gist.github.com/jewelsea) - JavaFX/AWT Tray Icon / JavaFX Threading
 * Emi - OOP Recommendations / Exception Management
 * Ale - OOP Recommendations / Double Dispatch Implementation
-
-## To Do List
-
-* Auto-Start Option
-* Test deployment @zero
-* Bot class specification by configuration (inheritance)
-
-## Bugs
-
-* Tutorial/Help

@@ -1,4 +1,4 @@
-package model;
+package model.game_parser;
 
 public class GameAction {
     private String methodName;

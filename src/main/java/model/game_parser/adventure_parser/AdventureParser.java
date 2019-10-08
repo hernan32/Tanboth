@@ -1,17 +1,17 @@
-package model.adventure_parser;
+package model.game_parser.adventure_parser;
 
 
-import model.GameAction;
 import model.TanothHttpClientSingleton;
-import model.Validation;
-import model.adventure_parser.adventure.Adventure;
-import model.adventure_parser.adventure.AdventureCriteria;
-import model.adventure_parser.adventure.FightResult;
-import model.adventure_parser.adventure.exception.AdventureRunningException;
-import model.adventure_parser.adventure.exception.FightResultException;
-import model.adventure_parser.adventure.exception.IllusionCaveRunningException;
-import model.adventure_parser.adventure.exception.IllusionDisabledException;
-import model.exception.TimeOutException;
+import model.game_parser.GameAction;
+import model.game_parser.Validation;
+import model.game_parser.adventure_parser.adventure.AdventureAttributes;
+import model.game_parser.adventure_parser.adventure.AdventureCriteria;
+import model.game_parser.adventure_parser.adventure.FightResult;
+import model.game_parser.adventure_parser.adventure.exception.AdventureRunningException;
+import model.game_parser.adventure_parser.adventure.exception.FightResultException;
+import model.game_parser.adventure_parser.adventure.exception.IllusionCaveRunningException;
+import model.game_parser.adventure_parser.adventure.exception.IllusionDisabledException;
+import model.game_parser.game.exception.TimeOutException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -36,11 +36,11 @@ public class AdventureParser implements Validation {
     }
 
 
-    public Adventure startAdventureByCriteria(AdventureCriteria adventureCriteria) throws InterruptedException, AdventureRunningException, IOException, TimeOutException, FightResultException, IllusionCaveRunningException {
-        List<Adventure> AdventureList;
-        Adventure adventureByCriteria = new Adventure(Integer.MAX_VALUE, Integer.MAX_VALUE, 0, Integer.MAX_VALUE, 0, 0);
+    public AdventureAttributes startAdventureByCriteria(AdventureCriteria adventureCriteria) throws InterruptedException, AdventureRunningException, IOException, TimeOutException, FightResultException, IllusionCaveRunningException {
+        List<AdventureAttributes> AdventureList;
+        AdventureAttributes adventureByCriteria = new AdventureAttributes(Integer.MAX_VALUE, Integer.MAX_VALUE, 0, Integer.MAX_VALUE, 0, 0);
         AdventureList = getAdventures();
-        for (Adventure adventure : AdventureList) {
+        for (AdventureAttributes adventure : AdventureList) {
             if (adventure.getDifficulty() != 2)
                 adventureByCriteria = adventure.getBest(adventureCriteria, adventureByCriteria); // =2 Hardest
         }
@@ -48,7 +48,7 @@ public class AdventureParser implements Validation {
         return adventureByCriteria;
     }
 
-    private void startAdventure(Adventure adventure) throws IOException, InterruptedException, AdventureRunningException, TimeOutException, FightResultException, IllusionCaveRunningException {
+    private void startAdventure(AdventureAttributes adventure) throws IOException, InterruptedException, AdventureRunningException, TimeOutException, FightResultException, IllusionCaveRunningException {
         String GetAdventures = METHOD_LIST.GetAdventures.name();
         String StartAdventure = METHOD_LIST.StartAdventure.name();
         GameAction GameAction = new GameAction.newBuilder(GetAdventures, httpClient.getSessionID()).build();
@@ -60,12 +60,12 @@ public class AdventureParser implements Validation {
         httpClient.getXMLByAction(GameAction);
     }
 
-    private List<Adventure> getAdventures() throws IOException, InterruptedException, AdventureRunningException, TimeOutException, IllusionCaveRunningException, FightResultException {
+    private List<AdventureAttributes> getAdventures() throws IOException, InterruptedException, AdventureRunningException, TimeOutException, IllusionCaveRunningException, FightResultException {
         String GetAdventures = METHOD_LIST.GetAdventures.name();
         GameAction GameAction = new GameAction.newBuilder(GetAdventures, httpClient.getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        List<Adventure> adventures = new ArrayList<>();
-        Adventure adventure;
+        List<AdventureAttributes> adventures = new ArrayList<>();
+        AdventureAttributes adventure;
         Elements adventuresXML = XML.select("array").select("struct");
         int difficulty, duration, experience, fightChance, gold, questID;
         for (Element adventureXML : adventuresXML) {
@@ -78,7 +78,7 @@ public class AdventureParser implements Validation {
             gold = Integer.parseInt(adventureParametersXML.get(4).text());
             questID = Integer.parseInt(adventureParametersXML.get(5).text());
 
-            adventure = new Adventure(difficulty, duration, experience, fightChance, gold, questID);
+            adventure = new AdventureAttributes(difficulty, duration, experience, fightChance, gold, questID);
             adventures.add(adventure);
         }
         return adventures;
@@ -108,7 +108,7 @@ public class AdventureParser implements Validation {
         if (isEnabledIllusionCave(XML))
             throw new IllusionDisabledException("[ERROR] Illusion Cave Disabled @" + GetMapDetails);
         validateResponse(XML, GetMapDetails);
-        return 1 - Integer.parseInt(XML.getElementsContainingOwnText("illusion_cave_bloodstone_cost").first().parent().select("i4").text());
+        return Integer.parseInt(XML.getElementsContainingOwnText("illusion_cave_bloodstone_cost").first().parent().select("i4").text());
     }
 
     public void startIllusionCave() throws IOException, InterruptedException, AdventureRunningException, TimeOutException, FightResultException, IllusionCaveRunningException {

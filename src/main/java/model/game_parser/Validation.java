@@ -1,9 +1,9 @@
-package model;
+package model.game_parser;
 
-import model.adventure_parser.adventure.exception.AdventureRunningException;
-import model.adventure_parser.adventure.exception.FightResultException;
-import model.adventure_parser.adventure.exception.IllusionCaveRunningException;
-import model.exception.TimeOutException;
+import model.game_parser.adventure_parser.adventure.exception.AdventureRunningException;
+import model.game_parser.adventure_parser.adventure.exception.FightResultException;
+import model.game_parser.adventure_parser.adventure.exception.IllusionCaveRunningException;
+import model.game_parser.game.exception.TimeOutException;
 import org.jsoup.nodes.Document;
 
 public interface Validation {

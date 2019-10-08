@@ -1,4 +1,4 @@
-package model.equipment_parser.item;
+package model.game_parser.equipment_parser.item;
 
 
 import org.jsoup.nodes.Element;

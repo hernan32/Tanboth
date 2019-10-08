@@ -1,13 +1,13 @@
-package model.user_parser;
+package model.game_parser.user_parser;
 
-import model.GameAction;
 import model.TanothHttpClientSingleton;
-import model.Validation;
-import model.adventure_parser.adventure.exception.AdventureRunningException;
-import model.adventure_parser.adventure.exception.FightResultException;
-import model.adventure_parser.adventure.exception.IllusionCaveRunningException;
-import model.exception.TimeOutException;
-import model.user_parser.user.UserAttributes;
+import model.game_parser.GameAction;
+import model.game_parser.Validation;
+import model.game_parser.adventure_parser.adventure.exception.AdventureRunningException;
+import model.game_parser.adventure_parser.adventure.exception.FightResultException;
+import model.game_parser.adventure_parser.adventure.exception.IllusionCaveRunningException;
+import model.game_parser.game.exception.TimeOutException;
+import model.game_parser.user_parser.user.UserAttributes;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 

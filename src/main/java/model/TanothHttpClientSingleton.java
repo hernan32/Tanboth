@@ -1,6 +1,7 @@
 package model;
 
 import configuration.ConfigurationSingleton;
+import model.game_parser.GameAction;
 
 import java.io.IOException;
 import java.net.CookieManager;

@@ -1,6 +1,6 @@
-package model.adventure_parser.adventure;
+package model.game_parser.adventure_parser.adventure;
 
-public class Adventure {
+public class AdventureAttributes {
     private int difficulty;
     private int duration;
     private int experience;
@@ -8,7 +8,7 @@ public class Adventure {
     private int gold;
     private int questID;
 
-    public Adventure(int difficulty, int duration, int experience, int fightChance, int gold, int questID) {
+    public AdventureAttributes(int difficulty, int duration, int experience, int fightChance, int gold, int questID) {
         this.difficulty = difficulty;
         this.duration = duration;
         this.experience = experience;
@@ -45,7 +45,7 @@ public class Adventure {
         return c.getValueFor(this);
     }*/
 
-    public Adventure getBest(AdventureCriteria c, Adventure adventure) {
+    public AdventureAttributes getBest(AdventureCriteria c, AdventureAttributes adventure) {
         return c.getBestFor(this, adventure);
     }
 
