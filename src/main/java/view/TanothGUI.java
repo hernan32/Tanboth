@@ -48,8 +48,8 @@ public class TanothGUI extends Application {
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
         //set Stage boundaries to the lower right corner of the visible bounds of the main screen
         this.stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
-        this.stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 260);
-        Scene scene = new Scene(root, 500, 265);
+        this.stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 274);
+        Scene scene = new Scene(root, 500, 274);
         javafx.scene.image.Image icon = new javafx.scene.image.Image(this.getClass().getResourceAsStream("/images/tanothicon.png"));
         stage.getIcons().add(icon);
         scene.getRoot().requestFocus();
@@ -98,7 +98,7 @@ public class TanothGUI extends Application {
             MenuItem exitItem = new MenuItem("Exit");
             exitItem.addActionListener(event -> {
                 Platform.exit();
-                removeAppToTray();
+                tray.remove(trayIcon);
             });
 
             // setup the popup menu for the application.
@@ -117,10 +117,6 @@ public class TanothGUI extends Application {
             System.out.println("Unable to init system tray");
             e.printStackTrace();
         }
-    }
-
-    private void removeAppToTray() {
-        tray.remove(trayIcon);
     }
 
     /**

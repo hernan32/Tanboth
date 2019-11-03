@@ -1,23 +1,17 @@
 package controller;
 
 import com.esotericsoftware.minlog.Log;
-import configuration.ConfigurationSingleton;
+import configuration.ConfigSingleton;
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
+import model.BotLogic;
 import model.game_parser.GameParser;
 import model.game_parser.adventure_parser.AdventureParser;
-import model.game_parser.adventure_parser.adventure.AdventureAttributes;
-import model.game_parser.adventure_parser.adventure.AdventureCriteria;
-import model.game_parser.adventure_parser.adventure.criterias.TimeCriteria;
-import model.game_parser.adventure_parser.adventure.exception.AdventureRunningException;
-import model.game_parser.adventure_parser.adventure.exception.FightResultException;
-import model.game_parser.adventure_parser.adventure.exception.IllusionCaveRunningException;
-import model.game_parser.adventure_parser.adventure.exception.IllusionDisabledException;
+import model.game_parser.adventure_parser.adventure.exception.*;
 import model.game_parser.equipment_parser.EquipmentParser;
 import model.game_parser.game.GameAttributes;
 import model.game_parser.game.exception.TimeOutException;
@@ -25,194 +19,92 @@ import model.game_parser.game.exception.TimeOutException;
 import java.awt.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.TimeUnit;
-
-import static java.time.temporal.ChronoUnit.SECONDS;
 
 public class TanothGUIController {
-    //Model
     private GameParser gameParser;
     private GameAttributes gameAttributes;
+    private BotLogic bot;
 
-    //View
     @FXML
     private TextArea fxMainTextArea;
     @FXML
     private Button fxTray;
     @FXML
     private Label fxStatus;
+    @FXML
+    private Label fxAccountInfo;
+
     private SystemTray tray;
     private TrayIcon trayIcon;
-
-    //Configuration
-    private ConfigurationSingleton configuration = ConfigurationSingleton.getInstance();
-
-
-    private enum Status {
-        STARTED, STOPPED
-    }
 
     public TanothGUIController() throws IOException, InterruptedException {
         gameParser = new GameParser();
         gameAttributes = gameParser.getGameAttributes();
-        if (ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.debugMode).equals("OFF"))
+        bot = new BotLogic(this, gameParser);
+        if (!ConfigSingleton.getInstance().getOption(ConfigSingleton.Option.debugMode))
             Log.set(Log.LEVEL_NONE);
     }
 
-    private Task botTask = new Task() {
-        @Override
-        protected Object call() throws Exception {
-            String status;
-
-            while (true) {
-                Log.warn("------------- > Loop Start");
-                Log.info("Collecting Data...");
-                collectData();
-                if (Boolean.parseBoolean(configuration.getProperty(ConfigurationSingleton.Property.autoIncreaseStats))) {
-                    gameParser.getUserParser().increaseStats();
-                    Log.info("Increasing Stats: Done.");
-                }
-                if (!gameAttributes.isQuestStarted()) {
-                    Log.info("Stopped == TRUE");
-                    if (gameAttributes.getAdventuresMade() < gameAttributes.getFreeAdventures()) {
-                        Log.info("adventuresMade < freeAdventures == TRUE  -> ¡Starting Bot!");
-                        startBot();
-                        status = "Free quest available. Starting Quest...";
-                    } else {
-                        gameAttributes.setSleep(getSecondsToNextQuestRefresh());
-                        Log.info("adventuresMade < freeAdventures == FALSE  -> Restarting at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(gameAttributes.getSleep())));
-                        status = "No free quest available. Restarting at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(gameAttributes.getSleep()));
-                        if (gameAttributes.getBossMapMade() == 0) {
-                            gameParser.getAdventureParser().startIllusionCave();
-                            Log.info("Starting Boss Fights: Done");
-                        }
-                    }
-                } else status = "Adventure already running. Waiting for stop. Refreshing... ";
-                this.updateMessage(status + " (" + gameAttributes.getSleep() + " Seconds)");
-                Log.warn("------------- > Loop End");
-                Log.warn("## Sleep Thread: " + TimeUnit.SECONDS.toMillis(gameAttributes.getSleep()) + " millis / " + gameAttributes.getSleep() + " sec");
-                Thread.sleep(TimeUnit.SECONDS.toMillis(gameAttributes.getSleep()));
-            }
-        }
-    };
-
-
     @FXML
-    public void initialize() {
+    public void initialize() throws IOException {
+        ConfigSingleton configuration = ConfigSingleton.getInstance();
+        fxAccountInfo.setText(String.format("Server: %s / Account: %s", configuration.getProperty(ConfigSingleton.Property.serverNumber), configuration.getProperty(ConfigSingleton.Property.user)));
         fxTray.setDefaultButton(false);
-        Thread botThread = new Thread(botTask);
-        fxStatus.textProperty().bind(botTask.messageProperty());
-        botThread.start();
+        fxStatus.textProperty().bind(bot.getBotTask().messageProperty());
+        bot.getBotThread().start();
     }
 
-    private void collectData() throws IOException, InterruptedException {
+    public void collectData() throws IOException, InterruptedException, TimeOutException, FightResultException, AdventureRunningException, IllusionDisabledException, IllusionCaveRunningException, WorkingException, RewardResultException {
         AdventureParser adventureParser = gameParser.getAdventureParser();
         EquipmentParser equipmentParser = gameParser.getEquipmentParser();
-        try {
-            if (gameAttributes.isQuestStarted()) {
-                adventureParser.getFightResult();
-                Log.info("Getting Fight Result: Done.");
-            }
-            try {
-                gameAttributes.setBossMapMade(adventureParser.getBossMapMadeToday());
-                Log.info("Getting Boss Map Made: Done.");
-            } catch (IllusionDisabledException e) {
-                Log.info(e.getMessage());
-                gameAttributes.setBossMapMade(-1);
-            }
-            gameAttributes.setInventorySpaces(equipmentParser.getInventorySpace());
-            Log.info("Getting Inventory Space: Done.");
-            gameAttributes.setAdventuresMade(adventureParser.getAdventuresMadeToday());
-            Log.info("Getting Adventures Made: Done.");
-            gameAttributes.setFreeAdventures(adventureParser.getFreeAdventuresPerDay());
-            Log.info("Getting Free Adventures: Done.");
-            gameAttributes.setQuestStarted(false);
-
-            setMainContentText(gameAttributes.getAdventuresMade(), gameAttributes.getFreeAdventures(), gameAttributes.getBossMapMade(), gameAttributes.getInventorySpaces(), Status.STOPPED.toString());
-            Log.info(gameAttributes.getAllAttributesToString() + " [Status: " + Status.STOPPED.toString() + "]");
-        } catch (AdventureRunningException ex) {
-            gameAttributes.setFreeAdventures(-1);
-            gameAttributes.setAdventuresMade(-1);
-            gameAttributes.setQuestStarted(true);
-            Log.info("[Quest: " + gameAttributes.getAdventuresMade() + " / " + gameAttributes.getFreeAdventures() + "] [Boss Map: " + gameAttributes.getBossMapMade() + "/1] [Spaces: " + gameAttributes.getInventorySpaces() + "] [Status: " + Status.STARTED.toString() + "]");
-            setMainContentText("Can't get information when - Quest Running -");
-        } catch (TimeOutException ex) {
-            Log.info(ex.getMessage());
-            setMainContentText("Time Out. Reconnecting...");
-            Log.warn("Time Out. Reconnecting...");
-            gameParser.reconnect();
-            collectData();
-        } catch (FightResultException ex) {
-            Log.info(ex.getMessage());
-            collectData();
-        } catch (IllusionCaveRunningException ex) {
-            Log.info(ex.getMessage());
-        }
+        Log.warn("getAdventuresMadeToday");
+        gameAttributes.setAdventuresMade(adventureParser.getAdventuresMadeToday());
+        Log.warn("getFreeAdventuresPerDay");
+        gameAttributes.setFreeAdventures(adventureParser.getFreeAdventuresPerDay());
+        Log.warn("getBossMapMadeToday");
+        gameAttributes.setBossMapMade(adventureParser.getBossMapMadeToday());
+        Log.warn("getInventorySpace");
+        gameAttributes.setInventorySpaces(equipmentParser.getInventorySpace());
     }
 
-    private void startBot() throws IOException, InterruptedException {
-        AdventureAttributes activeAdventure;
-        AdventureParser adventureParser = gameParser.getAdventureParser();
-        EquipmentParser equipmentParser = gameParser.getEquipmentParser();
-        try {
-            if (Boolean.parseBoolean(configuration.getProperty(ConfigurationSingleton.Property.autoIncreaseStats))) {
-                equipmentParser.sellItemsFromInventory(Boolean.parseBoolean(configuration.getProperty(ConfigurationSingleton.Property.sellEpics)));
-                Log.info("Selling Items (Epic: " + Boolean.parseBoolean(configuration.getProperty(ConfigurationSingleton.Property.sellEpics)) + "): Done.");
-            }
-            AdventureCriteria adventureCriteria = new TimeCriteria();
-            activeAdventure = adventureParser.startAdventureByCriteria(adventureCriteria);
-            gameAttributes.setQuestStarted(true);
-            String questDescription = "[Difficulty: " + activeAdventure.getDifficulty() + " / " +
-                    "Duration: " + activeAdventure.getDuration() + " / " +
-                    "Exp: " + activeAdventure.getExperience() + " / " +
-                    "Chance: " + activeAdventure.getFightChance() + " / " +
-                    "Gold: " + activeAdventure.getGold() + " / " +
-                    "Quest ID: " + activeAdventure.getQuestID() + " / " +
-                    "Finishing at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(activeAdventure.getDuration())) + "]";
-            gameAttributes.setAdventuresMade(gameAttributes.getAdventuresMade() + 1);
-            setMainContentText(gameAttributes.getAdventuresMade(), gameAttributes.getFreeAdventures(), gameAttributes.getBossMapMade(), gameAttributes.getInventorySpaces(), questDescription);
-            gameAttributes.setSleep(activeAdventure.getDuration() + 20); // 20 Sec. Delay
-
-        } catch (AdventureRunningException ex) {
-            setMainContentText("Can't get information when - Quest Running -");
-            gameAttributes.setSleep(60);
-        } catch (TimeOutException ex) {
-            setMainContentText("Time Out. Reconnecting...");
-            Log.warn("Reconnecting...");
-            gameParser.reconnect();
-            startBot();
-        } catch (IllusionCaveRunningException | FightResultException ex) {
-            ex.printStackTrace();
-        }
+    public String getQuestDescription(int difficulty, int duration, int exp, int fightChance, int gold, int questID) {
+        return "[Difficulty: " + difficulty + " / " +
+                "Duration: " + duration + " / " +
+                "Exp: " + exp + " / " +
+                "Chance: " + fightChance + " / " +
+                "Gold: " + gold + " / " +
+                "Quest ID: " + questID + " / " +
+                "Finishing at: " + DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(gameParser.getGameAttributes().getSleep())) + "]";
     }
 
-    private void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces, String questStatus) {
-        //Controller
-        String mainContentText = "Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
-                "Today Boss Map: " + bossMapMade + " / " + 1 + "\n" +
-                "Free Inventory Spaces: " + inventorySpaces + "\n" +
-                "Adventure Status: " + questStatus;
-        setTextArea(mainContentText);
+
+    public void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces, String questStatus) {
+        setTextArea(getBaseText(adventuresMade, freeAdventures, bossMapMade, inventorySpaces) +
+                "Quest Status: " + questStatus
+        );
     }
 
-    private void setMainContentText(String content) {
+    public void setMainContentText(String content) {
         setTextArea(content);
     }
 
+    private String getBaseText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces) {
+        return "Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
+                "Today Boss Map: " + bossMapMade + " / " + 1 + "\n" +
+                "Free Inventory Spaces: " + inventorySpaces + "\n";
+    }
+
     private void setTextArea(String mainContentText) {
-        Platform.runLater(() -> {
-            Log.info("Updating Main Content Text Area... (FX Thread)");
-            fxMainTextArea.setText(mainContentText);
-        });
+        Log.warn("Current Status:\n------------------------\n" + mainContentText + "\n------------------------");
+        Platform.runLater(() -> fxMainTextArea.setText(mainContentText));
     }
 
     @FXML
     private void closeProgram() {
         Platform.exit();
         tray.remove(trayIcon);
-        botTask.cancel();
+        bot.getBotThread().stop();
     }
 
     @FXML
@@ -224,20 +116,6 @@ public class TanothGUIController {
     public void setTrayData(SystemTray tray, TrayIcon trayIcon) {
         this.tray = tray;
         this.trayIcon = trayIcon;
-    }
-
-    private int getSecondsToNextQuestRefresh() {
-        LocalTime timeNow = LocalTime.now();
-        LocalTime refreshTime = LocalTime.parse(configuration.getProperty(ConfigurationSingleton.Property.resetTime));
-        int secondsRefresh;
-        Log.info("Actual Time is Before Refresh Time: " + timeNow.isBefore(refreshTime));
-        if (timeNow.isBefore(refreshTime)) {
-            secondsRefresh = (int) SECONDS.between(timeNow, refreshTime) + 120;
-        } else {
-            secondsRefresh = (int) Math.abs(SECONDS.between(timeNow, LocalTime.parse("23:59:59"))) + refreshTime.toSecondOfDay() + 120;
-
-        }
-        return secondsRefresh;
     }
 
 

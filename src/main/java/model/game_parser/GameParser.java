@@ -13,6 +13,7 @@ public class GameParser {
     private AdventureParser adventureParser;
     private UserParser userParser;
     private EquipmentParser equipmentParser;
+    private GameAttributes gameAttributes;
 
     /*
       Method List:
@@ -28,6 +29,8 @@ public class GameParser {
         adventureParser = new AdventureParser(httpClient);
         userParser = new UserParser(httpClient);
         equipmentParser = new EquipmentParser(httpClient);
+        gameAttributes = new GameAttributes();
+
     }
 
     public UserParser getUserParser() {
@@ -47,7 +50,7 @@ public class GameParser {
     }
 
     public GameAttributes getGameAttributes() {
-        return new GameAttributes();
+        return gameAttributes;
     }
 }
 

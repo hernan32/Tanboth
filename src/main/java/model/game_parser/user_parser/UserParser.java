@@ -3,9 +3,7 @@ package model.game_parser.user_parser;
 import model.TanothHttpClientSingleton;
 import model.game_parser.GameAction;
 import model.game_parser.Validation;
-import model.game_parser.adventure_parser.adventure.exception.AdventureRunningException;
-import model.game_parser.adventure_parser.adventure.exception.FightResultException;
-import model.game_parser.adventure_parser.adventure.exception.IllusionCaveRunningException;
+import model.game_parser.adventure_parser.adventure.exception.*;
 import model.game_parser.game.exception.TimeOutException;
 import model.game_parser.user_parser.user.UserAttributes;
 import org.jsoup.Jsoup;
@@ -28,7 +26,7 @@ public class UserParser implements Validation {
     }
 
     // STR DEX CON INT
-    public void increaseStats() throws IOException, InterruptedException, TimeOutException, AdventureRunningException, IllusionCaveRunningException, FightResultException {
+    public void increaseStats() throws IOException, InterruptedException, TimeOutException, AdventureRunningException, IllusionCaveRunningException, FightResultException, WorkingException, IllusionDisabledException, RewardResultException {
         boolean lowGold = false;
         GameAction gameAction;
         UserAttributes attr = getUserAttributes();
@@ -64,7 +62,7 @@ public class UserParser implements Validation {
         }
     }
 
-    private UserAttributes getUserAttributes() throws IOException, InterruptedException, TimeOutException, AdventureRunningException, IllusionCaveRunningException, FightResultException {
+    private UserAttributes getUserAttributes() throws IOException, InterruptedException, TimeOutException, AdventureRunningException, IllusionCaveRunningException, FightResultException, WorkingException, RewardResultException, IllusionDisabledException {
         String GetUserAttributes = METHOD_LIST.GetUserAttributes.name();
         GameAction GameAction = new GameAction.newBuilder(GetUserAttributes, httpClient.getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));

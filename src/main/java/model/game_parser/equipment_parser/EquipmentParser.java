@@ -3,9 +3,7 @@ package model.game_parser.equipment_parser;
 import model.TanothHttpClientSingleton;
 import model.game_parser.GameAction;
 import model.game_parser.Validation;
-import model.game_parser.adventure_parser.adventure.exception.AdventureRunningException;
-import model.game_parser.adventure_parser.adventure.exception.FightResultException;
-import model.game_parser.adventure_parser.adventure.exception.IllusionCaveRunningException;
+import model.game_parser.adventure_parser.adventure.exception.*;
 import model.game_parser.equipment_parser.item.ItemAttributes;
 import model.game_parser.game.exception.TimeOutException;
 import org.jsoup.Jsoup;
@@ -31,7 +29,7 @@ public class EquipmentParser implements Validation {
         this.httpClient = httpClient;
     }
 
-    private List<ItemAttributes> getItems() throws IOException, InterruptedException, AdventureRunningException, FightResultException, TimeOutException, IllusionCaveRunningException {
+    private List<ItemAttributes> getItems() throws IOException, InterruptedException, AdventureRunningException, FightResultException, TimeOutException, IllusionCaveRunningException, WorkingException, RewardResultException, IllusionDisabledException {
         String GetEquipment = METHOD_LIST.GetEquipment.name();
         GameAction GameAction = new GameAction.newBuilder(GetEquipment, httpClient.getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
@@ -49,7 +47,7 @@ public class EquipmentParser implements Validation {
         return items;
     }
 
-    private List<ItemAttributes> getItemsFromInventory() throws InterruptedException, AdventureRunningException, IllusionCaveRunningException, IOException, TimeOutException, FightResultException {
+    private List<ItemAttributes> getItemsFromInventory() throws InterruptedException, AdventureRunningException, IllusionCaveRunningException, IOException, TimeOutException, FightResultException, WorkingException, RewardResultException, IllusionDisabledException {
         List<ItemAttributes> Items = getItems();
         List<ItemAttributes> inventoryItems = new ArrayList<>();
         for (ItemAttributes i : Items) {
@@ -58,7 +56,7 @@ public class EquipmentParser implements Validation {
         return inventoryItems;
     }
 
-    public void sellItemsFromInventory(Boolean isSellingUniques) throws InterruptedException, AdventureRunningException, IllusionCaveRunningException, IOException, TimeOutException, FightResultException {
+    public void sellItemsFromInventory(Boolean isSellingUniques) throws InterruptedException, AdventureRunningException, IllusionCaveRunningException, IOException, TimeOutException, FightResultException, WorkingException, RewardResultException, IllusionDisabledException {
         String SellItem = METHOD_LIST.SellItem.name();
         List<ItemAttributes> inventoryItems = getItemsFromInventory();
         for (ItemAttributes item : inventoryItems) {
@@ -69,7 +67,7 @@ public class EquipmentParser implements Validation {
         }
     }
 
-    public int getInventorySpace() throws InterruptedException, AdventureRunningException, IllusionCaveRunningException, IOException, TimeOutException, FightResultException {
+    public int getInventorySpace() throws InterruptedException, AdventureRunningException, IllusionCaveRunningException, IOException, TimeOutException, FightResultException, WorkingException, RewardResultException, IllusionDisabledException {
         return getItems().size();
     }
 

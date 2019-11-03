@@ -1,6 +1,6 @@
 package model;
 
-import configuration.ConfigurationSingleton;
+import configuration.ConfigSingleton;
 import model.game_parser.GameAction;
 
 import java.io.IOException;
@@ -23,10 +23,10 @@ public class TanothHttpClientSingleton {
     private static String SESSION_ID;
 
     private TanothHttpClientSingleton() throws IOException, InterruptedException {
-        loginURI = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.serverURL);
-        user = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.user);
-        password = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.password);
-        serverNumber = ConfigurationSingleton.getInstance().getProperty(ConfigurationSingleton.Property.serverNumber);
+        loginURI = ConfigSingleton.getInstance().getProperty(ConfigSingleton.Property.serverURL);
+        user = ConfigSingleton.getInstance().getProperty(ConfigSingleton.Property.user);
+        password = ConfigSingleton.getInstance().getProperty(ConfigSingleton.Property.password);
+        serverNumber = ConfigSingleton.getInstance().getProperty(ConfigSingleton.Property.serverNumber);
 
         httpClient = HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())
@@ -50,10 +50,6 @@ public class TanothHttpClientSingleton {
         SESSION_ID = flashVars.getSessionID();
     }
 
-
-    public static String getSessionId() {
-        return SESSION_ID;
-    }
 
     public void login() throws IOException, InterruptedException {
         connect();
@@ -90,4 +86,11 @@ public class TanothHttpClientSingleton {
     }
 
 
+    public String getServerNumber() {
+        return serverNumber;
+    }
+
+    public String getUser() {
+        return user;
+    }
 }
