@@ -1,4 +1,4 @@
-# Tanboth 2.0
+# Tanboth 2.1
 
 Bot for the game called "Tanoth" (by GameForge) made in Java.
  
@@ -6,7 +6,7 @@ Bot for the game called "Tanoth" (by GameForge) made in Java.
 * Auto Quest
 * Auto Add Stats
 * Auto Dungeon (Soon)
-* Auto Illusion Cave (Soon)
+* Auto Illusion Cave
 
 ## Getting Started
 
@@ -68,7 +68,7 @@ password=YourPassword
 serverURL=https://s1-es.tanoth.gameforge.com/user/login/
 serverNumber=1
 resetTime=19:00:00
-debugMode=OFF
+debugMode=false
 autoSellItems=false
 sellEpics=false
 autoIncreaseStats=false

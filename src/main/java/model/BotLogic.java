@@ -49,7 +49,7 @@ public class BotLogic {
                         if (gameAttributes.getAdventuresMade() < gameAttributes.getFreeAdventures()) {
                             Log.warn("ADV < FREE: DONE");
                             AdventureAttributes adventure;
-                            if (cfg.getOption(ConfigSingleton.Option.autoIncreaseStats))
+                            if (cfg.getOption(ConfigSingleton.Option.autoSellItems))
                                 equipmentParser.sellItemsFromInventory(cfg.getOption(ConfigSingleton.Option.sellEpics));
                             adventure = adventureParser.startAdventureByCriteria(new TimeCriteria());
                             gameAttributes.setSleep(adventure.getDuration() + SECURE_DELAY);
