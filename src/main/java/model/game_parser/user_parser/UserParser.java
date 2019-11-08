@@ -19,6 +19,7 @@ public class UserParser implements Validation {
         GetInboxHeaders, GetOutboxHeaders,
         GetGuild, GetHighscore, GetPvpData, GetMount,
         GetPremiumData, RaiseAttribute, GetUserAttributes,
+        MiniUpdate
     }
 
     public UserParser(TanothHttpClientSingleton httpClient) {
@@ -63,16 +64,23 @@ public class UserParser implements Validation {
     }
 
     private UserAttributes getUserAttributes() throws IOException, InterruptedException, TimeOutException, AdventureRunningException, IllusionCaveRunningException, FightResultException, WorkingException, RewardResultException, IllusionDisabledException {
-        String GetUserAttributes = METHOD_LIST.GetUserAttributes.name();
-        GameAction GameAction = new GameAction.newBuilder(GetUserAttributes, httpClient.getSessionID()).build();
-        Document XML = Jsoup.parse(httpClient.getXMLByAction(GameAction));
-        validateResponse(XML, GetUserAttributes);
+        String getUserAttributes = METHOD_LIST.GetUserAttributes.name();
+        GameAction gameAction = new GameAction.newBuilder(getUserAttributes, httpClient.getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(gameAction));
+        validateResponse(XML, getUserAttributes);
         String[] nameStats = {"cost_dex", "cost_int", "cost_str", "cost_con", "gold"};
         int[] userStats = new int[nameStats.length];
         for (int i = 0; i < 5; i++) {
             userStats[i] = Integer.parseInt(XML.select("name:contains(" + nameStats[i] + ")").first().parent().select("member > value > i4").text());
         }
         return new UserAttributes(userStats[0], userStats[1], userStats[2], userStats[3], userStats[4]);
+    }
+
+    public int getBloodStones() throws IOException, InterruptedException {
+        String getBloodStones = METHOD_LIST.MiniUpdate.name();
+        GameAction gameAction = new GameAction.newBuilder(getBloodStones, httpClient.getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(gameAction));
+        return Integer.parseInt(XML.getElementsContainingOwnText("bs").first().parent().select("i4").text());
     }
 
 }

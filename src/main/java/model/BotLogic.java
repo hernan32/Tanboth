@@ -47,32 +47,44 @@ public class BotLogic {
                             gameParser.getUserParser().increaseStats();
                         }
                         if (gameAttributes.getAdventuresMade() < gameAttributes.getFreeAdventures()) {
-                            Log.warn("ADV < FREE: DONE");
+                            Log.warn("ADV < FREE: DONE (Starting Adventure)");
                             AdventureAttributes adventure;
                             if (cfg.getOption(ConfigSingleton.Option.autoSellItems))
                                 equipmentParser.sellItemsFromInventory(cfg.getOption(ConfigSingleton.Option.sellEpics));
                             adventure = adventureParser.startAdventureByCriteria(new TimeCriteria());
+                            Log.warn("Adventure Started: DONE");
                             gameAttributes.setSleep(adventure.getDuration() + SECURE_DELAY);
                             String questDescription = controller.getQuestDescription(adventure.getDifficulty(), adventure.getDuration(), adventure.getExperience(), adventure.getFightChance(), adventure.getGold(), adventure.getQuestID());
                             gameAttributes.setAdventuresMade(gameAttributes.getAdventuresMade());
-                            controller.setMainContentText(gameAttributes.getAdventuresMade(), gameAttributes.getFreeAdventures(), gameAttributes.getBossMapMade(), gameAttributes.getInventorySpaces(), questDescription);
+                            controller.setMainContentText(gameAttributes.getAdventuresMade(), gameAttributes.getFreeAdventures(), gameAttributes.getBossMapMade(), gameAttributes.getInventorySpaces(), gameAttributes.getDungeonsMade(), gameAttributes.getFreeDungeons(), questDescription);
                             status = String.format("Quest (Nº %d). Busy until: %s", gameAttributes.getAdventuresMade() + 1, DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(gameAttributes.getSleep())));
                         } else {
                             Log.warn("ADV >= FREE: DONE");
-                            if (gameAttributes.getBossMapMade() == 0) {
-                                Log.warn("BOSS = 0: DONE (Starting Illusion Cave)");
-                                gameParser.getAdventureParser().startIllusionCave();
-                                Log.warn("Illusion Cave Started: DONE");
-                                gameAttributes.setSleep(adventureParser.getIllusionCaveSeconds() + SECURE_DELAY / 2);
+                            Log.warn(gameAttributes.getDungeonsMade() + " / " + gameAttributes.getFreeDungeons());
+                            if (gameAttributes.getDungeonsMade() < gameAttributes.getFreeDungeons()) {
+                                Log.warn("DUNGEON < FREE: DONE (Starting Dungeon)");
+                                gameParser.getAdventureParser().startDungeon();
+                                Log.warn("Dungeon Started: DONE");
+                                gameAttributes.setSleep(SECURE_DELAY);
                                 Log.warn("Delay: " + gameAttributes.getSleep());
-                                status = "Illusion Cave. Busy until: ";
+                                status = "Dungeon. Busy until: ";
                             } else {
-                                Log.warn("BOSS != 0: DONE");
-                                gameAttributes.setSleep(getSecondsToNextQuestRefresh());
-                                status = "Nothing to do. Waiting refresh: ";
+                                Log.warn("DUNGEON >= FREE : DONE");
+                                if (gameAttributes.getBossMapMade() == 0) {
+                                    Log.warn("BOSS = 0: DONE (Starting Illusion Cave)");
+                                    gameParser.getAdventureParser().startIllusionCave();
+                                    Log.warn("Illusion Cave Started: DONE");
+                                    gameAttributes.setSleep(adventureParser.getIllusionCaveSeconds() + SECURE_DELAY / 2);
+                                    Log.warn("Delay: " + gameAttributes.getSleep());
+                                    status = "Illusion Cave. Busy until: ";
+                                } else {
+                                    Log.warn("BOSS != 0: DONE");
+                                    gameAttributes.setSleep(getSecondsToNextQuestRefresh());
+                                    status = "Nothing to do. Waiting refresh: ";
+                                }
                             }
                             status += DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(gameAttributes.getSleep()));
-                            controller.setMainContentText(gameAttributes.getAdventuresMade(), gameAttributes.getFreeAdventures(), gameAttributes.getBossMapMade(), gameAttributes.getInventorySpaces(), String.format("[%s]", status));
+                            controller.setMainContentText(gameAttributes.getAdventuresMade(), gameAttributes.getFreeAdventures(), gameAttributes.getBossMapMade(), gameAttributes.getInventorySpaces(), gameAttributes.getDungeonsMade(), gameAttributes.getFreeDungeons(), String.format("[%s]", status));
                         }
                     } catch (TimeOutException ex) {
                         Log.warn("Time Out.");

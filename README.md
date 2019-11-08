@@ -1,12 +1,13 @@
-# Tanboth 2.1
+# Tanboth 2.2
 
 Bot for the game called "Tanoth" (by GameForge) made in Java.
  
 ##### Functions:
 * Auto Quest
 * Auto Add Stats
-* Auto Dungeon (Soon)
+* Auto Dungeon
 * Auto Illusion Cave
+* Auto Sell Items
 
 ## Getting Started
 

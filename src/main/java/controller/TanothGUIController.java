@@ -15,6 +15,7 @@ import model.game_parser.adventure_parser.adventure.exception.*;
 import model.game_parser.equipment_parser.EquipmentParser;
 import model.game_parser.game.GameAttributes;
 import model.game_parser.game.exception.TimeOutException;
+import model.game_parser.user_parser.UserParser;
 
 import java.awt.*;
 import java.io.IOException;
@@ -58,6 +59,7 @@ public class TanothGUIController {
     public void collectData() throws IOException, InterruptedException, TimeOutException, FightResultException, AdventureRunningException, IllusionDisabledException, IllusionCaveRunningException, WorkingException, RewardResultException {
         AdventureParser adventureParser = gameParser.getAdventureParser();
         EquipmentParser equipmentParser = gameParser.getEquipmentParser();
+        UserParser userParser = gameParser.getUserParser();
         Log.warn("getAdventuresMadeToday");
         gameAttributes.setAdventuresMade(adventureParser.getAdventuresMadeToday());
         Log.warn("getFreeAdventuresPerDay");
@@ -66,6 +68,12 @@ public class TanothGUIController {
         gameAttributes.setBossMapMade(adventureParser.getBossMapMadeToday());
         Log.warn("getInventorySpace");
         gameAttributes.setInventorySpaces(equipmentParser.getInventorySpace());
+        Log.warn("getBloodStones");
+        gameAttributes.setBloodStones(userParser.getBloodStones());
+        Log.warn("getDungeonsMadeToday");
+        gameAttributes.setDungeonsMade(adventureParser.getDungeonsMadeToday());
+        Log.warn("getFreeAdventuresPerDay");
+        gameAttributes.setFreeDungeons(adventureParser.getFreeDungeonsPerDay());
     }
 
     public String getQuestDescription(int difficulty, int duration, int exp, int fightChance, int gold, int questID) {
@@ -79,8 +87,12 @@ public class TanothGUIController {
     }
 
 
-    public void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces, String questStatus) {
-        setTextArea(getBaseText(adventuresMade, freeAdventures, bossMapMade, inventorySpaces) +
+    public void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces, int dungeonsMade, int freeDugenons, String questStatus) {
+        setTextArea("Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
+                "Today Illusion Cave: " + bossMapMade + " / " + 1 + "\n" +
+                "Today Dungeon: " + dungeonsMade + " / " + freeDugenons + "\n" +
+                "Free Inventory Spaces: " + inventorySpaces + " / 30" + "\n" +
+                "BloodStones: " + gameAttributes.getBloodStones() + "\n" +
                 "Quest Status: " + questStatus
         );
     }
@@ -89,11 +101,6 @@ public class TanothGUIController {
         setTextArea(content);
     }
 
-    private String getBaseText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces) {
-        return "Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
-                "Today Boss Map: " + bossMapMade + " / " + 1 + "\n" +
-                "Free Inventory Spaces: " + inventorySpaces + "\n";
-    }
 
     private void setTextArea(String mainContentText) {
         Log.warn("Current Status:\n------------------------\n" + mainContentText + "\n------------------------");
@@ -113,9 +120,11 @@ public class TanothGUIController {
         stage.hide();
     }
 
-    public void setTrayData(SystemTray tray, TrayIcon trayIcon) {
+    public void setTrayData(SystemTray tray, TrayIcon trayIcon) throws IOException {
         this.tray = tray;
         this.trayIcon = trayIcon;
+        ConfigSingleton configuration = ConfigSingleton.getInstance();
+        trayIcon.setToolTip(String.format("Tanboth | Server: %s / Account: %s", configuration.getProperty(ConfigSingleton.Property.serverNumber), configuration.getProperty(ConfigSingleton.Property.user)));
     }
 
 

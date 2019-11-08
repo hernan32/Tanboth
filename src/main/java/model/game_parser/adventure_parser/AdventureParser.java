@@ -30,7 +30,7 @@ public class AdventureParser implements Validation {
         GetMapDetails, GetWorkData,
         GetDungeon, StartIllusionCave,
         StartAdventure, GetAdventures,
-        CancelIllusionCave,
+        CancelIllusionCave, StartDungeon,
         MiniUpdate //Experimental
     }
 
@@ -107,12 +107,34 @@ public class AdventureParser implements Validation {
         return Integer.parseInt(XML.getElementsContainingOwnText("illusion_cave_bloodstone_cost").first().parent().select("i4").text());
     }
 
+    public int getFreeDungeonsPerDay() throws RewardResultException, IllusionCaveRunningException, AdventureRunningException, WorkingException, IllusionDisabledException, TimeOutException, FightResultException, IOException, InterruptedException {
+        String getDungeon = METHOD_LIST.GetDungeon.name();
+        GameAction gameAction = new GameAction.newBuilder(getDungeon, httpClient.getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(gameAction));
+        validateResponse(XML, getDungeon);
+        return Integer.parseInt(XML.getElementsContainingOwnText("free_tries_today").first().parent().select("i4").text());
+    }
+
+    public int getDungeonsMadeToday() throws RewardResultException, IllusionCaveRunningException, AdventureRunningException, WorkingException, IllusionDisabledException, TimeOutException, FightResultException, IOException, InterruptedException {
+        String getDungeon = METHOD_LIST.GetDungeon.name();
+        GameAction gameAction = new GameAction.newBuilder(getDungeon, httpClient.getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(gameAction));
+        validateResponse(XML, getDungeon);
+        return Integer.parseInt(XML.getElementsContainingOwnText("dungeon_made_today").first().parent().select("i4").text());
+    }
+
     public void startIllusionCave() throws IOException, InterruptedException, AdventureRunningException, TimeOutException, FightResultException, IllusionCaveRunningException, WorkingException, IllusionDisabledException, RewardResultException {
         String startIllusionCave = METHOD_LIST.StartIllusionCave.name();
         GameAction gameAction = new GameAction.newBuilder(startIllusionCave, httpClient.getSessionID()).build();
         Document XML = Jsoup.parse(httpClient.getXMLByAction(gameAction));
-        Log.warn("Illusion Cave Flag");
         validateResponse(XML, startIllusionCave);
+    }
+
+    public void startDungeon() throws IOException, InterruptedException, RewardResultException, IllusionCaveRunningException, AdventureRunningException, WorkingException, IllusionDisabledException, TimeOutException, FightResultException {
+        String startDungeon = METHOD_LIST.StartDungeon.name();
+        GameAction gameAction = new GameAction.newBuilder(startDungeon, httpClient.getSessionID()).build();
+        Document XML = Jsoup.parse(httpClient.getXMLByAction(gameAction));
+        validateResponse(XML, startDungeon);
     }
 
     public void getResult() throws AdventureRunningException, IOException, InterruptedException, IllusionCaveRunningException, TimeOutException, FightResultException, WorkingException, RewardResultException, IllusionDisabledException {

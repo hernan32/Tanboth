@@ -8,6 +8,35 @@ public class GameAttributes {
     private int bossMapMade;
     private int sleep;
     private boolean questStarted;
+    private int dungeonsMade;
+
+    public int getDungeonsMade() {
+        return dungeonsMade;
+    }
+
+    public void setDungeonsMade(int dungeonsMade) {
+        this.dungeonsMade = dungeonsMade;
+    }
+
+    public int getFreeDungeons() {
+        return freeDungeons;
+    }
+
+    public void setFreeDungeons(int freeDungeons) {
+        this.freeDungeons = freeDungeons;
+    }
+
+    private int freeDungeons;
+
+    public int getBloodStones() {
+        return bloodStones;
+    }
+
+    public void setBloodStones(int bloodStones) {
+        this.bloodStones = bloodStones;
+    }
+
+    private int bloodStones;
 
     public GameAttributes() {
         sleep = 60;
