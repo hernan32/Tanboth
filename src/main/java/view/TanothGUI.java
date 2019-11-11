@@ -4,6 +4,7 @@ import controller.TanothGUIController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.LoadException;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -32,31 +33,36 @@ public class TanothGUI extends Application {
 
     @Override
     public void start(final Stage stage) throws IOException {
-        this.stage = stage;
-        fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/TanothGUI.fxml"));
-        Parent root = fxmlLoader.load();
-        root.setOnMousePressed(event -> {
-            xOffset = event.getSceneX();
-            yOffset = event.getSceneY();
-        });
-        root.setOnMouseDragged(event -> {
-            stage.setX(event.getScreenX() - xOffset);
-            stage.setY(event.getScreenY() - yOffset);
-        });
-        Platform.setImplicitExit(false);
-        SwingUtilities.invokeLater(this::addAppToTray);
-        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-        //set Stage boundaries to the lower right corner of the visible bounds of the main screen
-        this.stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
-        this.stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 274);
-        Scene scene = new Scene(root, 500, 274);
-        javafx.scene.image.Image icon = new javafx.scene.image.Image(this.getClass().getResourceAsStream("/images/tanothicon.png"));
-        stage.getIcons().add(icon);
-        scene.getRoot().requestFocus();
-        stage.setTitle("Tanboth");
-        stage.initStyle(StageStyle.UNDECORATED);
-        stage.setScene(scene);
-        stage.setResizable(false);
+
+        try {
+            this.stage = stage;
+            fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/TanothGUI.fxml"));
+            Parent root = fxmlLoader.load();
+            root.setOnMousePressed(event -> {
+                xOffset = event.getSceneX();
+                yOffset = event.getSceneY();
+            });
+            root.setOnMouseDragged(event -> {
+                stage.setX(event.getScreenX() - xOffset);
+                stage.setY(event.getScreenY() - yOffset);
+            });
+            Platform.setImplicitExit(false);
+            SwingUtilities.invokeLater(this::addAppToTray);
+            Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+            //set Stage boundaries to the lower right corner of the visible bounds of the main screen
+            this.stage.setX(primaryScreenBounds.getMinX() + primaryScreenBounds.getWidth() - 500);
+            this.stage.setY(primaryScreenBounds.getMinY() + primaryScreenBounds.getHeight() - 274);
+            Scene scene = new Scene(root, 500, 274);
+            javafx.scene.image.Image icon = new javafx.scene.image.Image(this.getClass().getResourceAsStream("/images/tanothicon.png"));
+            stage.getIcons().add(icon);
+            scene.getRoot().requestFocus();
+            stage.setTitle("Tanboth");
+            stage.initStyle(StageStyle.UNDECORATED);
+            stage.setScene(scene);
+            stage.setResizable(false);
+        } catch (LoadException ex) {
+            ex.printStackTrace();
+        }
     }
 
     /**

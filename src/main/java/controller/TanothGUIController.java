@@ -19,8 +19,10 @@ import model.game_parser.user_parser.UserParser;
 
 import java.awt.*;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.TimeUnit;
 
 public class TanothGUIController {
     private GameParser gameParser;
@@ -38,13 +40,12 @@ public class TanothGUIController {
 
     private SystemTray tray;
     private TrayIcon trayIcon;
+    private boolean waitConnect;
 
-    public TanothGUIController() throws IOException, InterruptedException {
-        gameParser = new GameParser();
-        gameAttributes = gameParser.getGameAttributes();
-        bot = new BotLogic(this, gameParser);
+    public TanothGUIController() throws IOException {
         if (!ConfigSingleton.getInstance().getOption(ConfigSingleton.Option.debugMode))
             Log.set(Log.LEVEL_NONE);
+        waitConnect = true;
     }
 
     @FXML
@@ -52,11 +53,37 @@ public class TanothGUIController {
         ConfigSingleton configuration = ConfigSingleton.getInstance();
         fxAccountInfo.setText(String.format("Server: %s / Account: %s", configuration.getProperty(ConfigSingleton.Property.serverNumber), configuration.getProperty(ConfigSingleton.Property.user)));
         fxTray.setDefaultButton(false);
-        fxStatus.textProperty().bind(bot.getBotTask().messageProperty());
-        bot.getBotThread().start();
+        fxMainTextArea.setText("Waiting for connection.");
+        Log.warn("Waiting for connection.");
+        waitConnection();
     }
 
-    public void collectData() throws IOException, InterruptedException, TimeOutException, FightResultException, AdventureRunningException, IllusionDisabledException, IllusionCaveRunningException, WorkingException, RewardResultException {
+    private void waitConnection() {
+        new Thread(() -> {
+            int sleep = 0;
+            while (waitConnect) {
+                try {
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(sleep));
+                    gameParser = new GameParser();
+                    gameAttributes = gameParser.getGameAttributes();
+                    waitConnect = false;
+                    bot = new BotLogic(this, gameParser);
+                    Platform.runLater(() -> fxStatus.textProperty().bind(bot.getBotTask().messageProperty()));
+                    bot.getBotThread().start();
+                } catch (ConnectException ex) {
+                    Log.warn("Connection Error. Waiting for connection.");
+                    Platform.runLater(() -> fxStatus.setText("Error."));
+                    waitConnect = true;
+                    sleep = 60;
+                } catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    public void collectData() throws
+            IOException, InterruptedException, TimeOutException, FightResultException, AdventureRunningException, IllusionDisabledException, IllusionCaveRunningException, WorkingException, RewardResultException {
         AdventureParser adventureParser = gameParser.getAdventureParser();
         EquipmentParser equipmentParser = gameParser.getEquipmentParser();
         UserParser userParser = gameParser.getUserParser();
@@ -76,7 +103,8 @@ public class TanothGUIController {
         gameAttributes.setFreeDungeons(adventureParser.getFreeDungeonsPerDay());
     }
 
-    public String getQuestDescription(int difficulty, int duration, int exp, int fightChance, int gold, int questID) {
+    public String getQuestDescription(int difficulty, int duration, int exp, int fightChance, int gold,
+                                      int questID) {
         return "[Difficulty: " + difficulty + " / " +
                 "Duration: " + duration + " / " +
                 "Exp: " + exp + " / " +
@@ -87,7 +115,8 @@ public class TanothGUIController {
     }
 
 
-    public void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces, int dungeonsMade, int freeDugenons, String questStatus) {
+    public void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces,
+                                   int dungeonsMade, int freeDugenons, String questStatus) {
         setTextArea("Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
                 "Today Illusion Cave: " + bossMapMade + " / " + 1 + "\n" +
                 "Today Dungeon: " + dungeonsMade + " / " + freeDugenons + "\n" +
@@ -111,7 +140,7 @@ public class TanothGUIController {
     private void closeProgram() {
         Platform.exit();
         tray.remove(trayIcon);
-        bot.getBotThread().stop();
+        bot.getBotThread().interrupt();
     }
 
     @FXML

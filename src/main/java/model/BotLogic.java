@@ -36,6 +36,8 @@ public class BotLogic {
                 GameAttributes gameAttributes = gameParser.getGameAttributes();
                 String status = "";
                 final int SECURE_DELAY = 60;
+                this.updateMessage("Loading...");
+                controller.setMainContentText("Loading...");
 
                 while (true) {
                     try {
