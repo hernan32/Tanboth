@@ -1,21 +1,27 @@
 package model;
 
 import configuration.ConfigSingleton;
-import model.game_parser.GameAction;
+import model.game.parser.GameAction;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 
 public class TanothHttpClientSingleton {
-    private String serverNumber;
-    private String user;
-    private String password;
-    private String loginURI;
+    private final String serverNumber;
+    private final String user;
+    private final String password;
+    private final String loginURI;
     private HttpClient httpClient;
     private String loginResponse;
     private static TanothHttpClientSingleton INSTANCE;
@@ -28,12 +34,36 @@ public class TanothHttpClientSingleton {
         password = ConfigSingleton.getInstance().getProperty(ConfigSingleton.Property.password);
         serverNumber = ConfigSingleton.getInstance().getProperty(ConfigSingleton.Property.serverNumber);
 
-        httpClient = HttpClient.newBuilder()
-                .cookieHandler(new CookieManager())
-                .version(HttpClient.Version.HTTP_1_1)
-                .followRedirects(HttpClient.Redirect.NORMAL)
-                .build();
-        connect();
+        TrustManager[] trustAllCerts = new TrustManager[]{
+                new X509TrustManager() {
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(
+                            java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(
+                            java.security.cert.X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        try {
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            httpClient = HttpClient.newBuilder()
+                    .cookieHandler(new CookieManager())
+                    .version(HttpClient.Version.HTTP_1_1)
+                    .followRedirects(HttpClient.Redirect.NORMAL)
+                    .sslContext(sc)
+                    .build();
+            connect();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
     }
 
     public static TanothHttpClientSingleton getInstance() throws IOException, InterruptedException {

@@ -9,13 +9,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 import model.BotLogic;
-import model.game_parser.GameParser;
-import model.game_parser.adventure_parser.AdventureParser;
-import model.game_parser.adventure_parser.adventure.exception.*;
-import model.game_parser.equipment_parser.EquipmentParser;
-import model.game_parser.game.GameAttributes;
-import model.game_parser.game.exception.TimeOutException;
-import model.game_parser.user_parser.UserParser;
+import model.game.attributes.GameAttributes;
+import model.game.parser.GameParser;
+import model.game.parser.equipment.EquipmentParser;
+import model.game.parser.exception.TimeOutException;
+import model.game.parser.quest.QuestParser;
+import model.game.parser.quest.exception.*;
+import model.game.parser.user.UserParser;
 
 import java.awt.*;
 import java.io.IOException;
@@ -42,14 +42,14 @@ public class TanothGUIController {
     private TrayIcon trayIcon;
     private boolean waitConnect;
 
-    public TanothGUIController() throws IOException {
-        if (!ConfigSingleton.getInstance().getOption(ConfigSingleton.Option.debugMode))
-            Log.set(Log.LEVEL_NONE);
+    public TanothGUIController() {
         waitConnect = true;
     }
 
     @FXML
     public void initialize() throws IOException {
+        if (!ConfigSingleton.getInstance().getOption(ConfigSingleton.Option.debugMode))
+            Log.set(Log.LEVEL_NONE);
         ConfigSingleton configuration = ConfigSingleton.getInstance();
         fxAccountInfo.setText(String.format("Server: %s / Account: %s", configuration.getProperty(ConfigSingleton.Property.serverNumber), configuration.getProperty(ConfigSingleton.Property.user)));
         fxTray.setDefaultButton(false);
@@ -59,6 +59,7 @@ public class TanothGUIController {
     }
 
     private void waitConnection() {
+
         new Thread(() -> {
             int sleep = 0;
             while (waitConnect) {
@@ -84,23 +85,25 @@ public class TanothGUIController {
 
     public void collectData() throws
             IOException, InterruptedException, TimeOutException, FightResultException, AdventureRunningException, IllusionDisabledException, IllusionCaveRunningException, WorkingException, RewardResultException {
-        AdventureParser adventureParser = gameParser.getAdventureParser();
+        QuestParser questParser = gameParser.getQuestParser();
         EquipmentParser equipmentParser = gameParser.getEquipmentParser();
         UserParser userParser = gameParser.getUserParser();
         Log.warn("getAdventuresMadeToday");
-        gameAttributes.setAdventuresMade(adventureParser.getAdventuresMadeToday());
+        questParser.getAdventuresMadeToday();
         Log.warn("getFreeAdventuresPerDay");
-        gameAttributes.setFreeAdventures(adventureParser.getFreeAdventuresPerDay());
-        Log.warn("getBossMapMadeToday");
-        gameAttributes.setBossMapMade(adventureParser.getBossMapMadeToday());
-        Log.warn("getInventorySpace");
-        gameAttributes.setInventorySpaces(equipmentParser.getInventorySpace());
+        questParser.getFreeAdventuresPerDay();
+        Log.warn("getIllusionCaveMadeToday");
+        questParser.getIllusionCaveMadeToday();
+        Log.warn("getItems");
+        equipmentParser.getItems();
         Log.warn("getBloodStones");
-        gameAttributes.setBloodStones(userParser.getBloodStones());
+        userParser.getBloodStones();
         Log.warn("getDungeonsMadeToday");
-        gameAttributes.setDungeonsMade(adventureParser.getDungeonsMadeToday());
-        Log.warn("getFreeAdventuresPerDay");
-        gameAttributes.setFreeDungeons(adventureParser.getFreeDungeonsPerDay());
+        questParser.getDungeonsMadeToday();
+        Log.warn("getFreeDungeonsPerDay");
+        questParser.getFreeDungeonsPerDay();
+        Log.warn("getUserAttributes");
+        userParser.getUserAttributes();
     }
 
     public String getQuestDescription(int difficulty, int duration, int exp, int fightChance, int gold,
@@ -116,12 +119,13 @@ public class TanothGUIController {
 
 
     public void setMainContentText(int adventuresMade, int freeAdventures, int bossMapMade, int inventorySpaces,
-                                   int dungeonsMade, int freeDugenons, String questStatus) {
+                                   int dungeonsMade, int freeDungeons, String questStatus) {
         setTextArea("Today Adventures: " + adventuresMade + " / " + freeAdventures + "\n" +
                 "Today Illusion Cave: " + bossMapMade + " / " + 1 + "\n" +
-                "Today Dungeon: " + dungeonsMade + " / " + freeDugenons + "\n" +
-                "Free Inventory Spaces: " + inventorySpaces + " / 30" + "\n" +
-                "BloodStones: " + gameAttributes.getBloodStones() + "\n" +
+                "Today Dungeon: " + dungeonsMade + " / " + freeDungeons + "\n" +
+                "Inventory Spaces: " + inventorySpaces + " / 30" + "\n" +
+                "BloodStones: " + gameAttributes.getUserAttributes().getBloodStones() + "\n" +
+                "Gold: " + gameAttributes.getUserAttributes().getGold() + "\n" +
                 "Quest Status: " + questStatus
         );
     }
