@@ -10,7 +10,6 @@ import model.game.attributes.quest.QuestAttributes;
 import model.game.attributes.quest.adventure.Adventure;
 import model.game.attributes.quest.adventure.criterias.ExpCriteria;
 import model.game.parser.GameParser;
-import model.game.parser.equipment.EquipmentParser;
 import model.game.parser.exception.TimeOutException;
 import model.game.parser.quest.QuestParser;
 import model.game.parser.quest.exception.*;
@@ -27,21 +26,11 @@ public class BotTask extends Task {
     private final GameParser gameParser;
     private final TanothGUIController controller;
     private final ConfigSingleton cfg = ConfigSingleton.getInstance();
-    private final QuestParser questParser;
-    private final EquipmentParser equipmentParser;
-    private final GameAttributes gameAttributes;
-    private final EquipmentAttributes equipmentAttributes;
-    private final QuestAttributes questAttributes;
     private final int SECURE_DELAY = 60;
 
     public BotTask(GameParser gameParser, TanothGUIController controller) throws IOException {
         this.gameParser = gameParser;
         this.controller = controller;
-        questParser = gameParser.getQuestParser();
-        equipmentParser = gameParser.getEquipmentParser();
-        gameAttributes = gameParser.getGameAttributes();
-        equipmentAttributes = gameAttributes.getEquipmentAttributes();
-        questAttributes = gameAttributes.getQuestAttributes();
     }
 
     @Override
@@ -49,6 +38,10 @@ public class BotTask extends Task {
         String status = "";
         this.updateMessage("Loading...");
         controller.setMainContentText("Loading...");
+        QuestParser questParser = gameParser.getQuestParser();
+        GameAttributes gameAttributes = gameParser.getGameAttributes();
+        QuestAttributes questAttributes = gameAttributes.getQuestAttributes();
+        EquipmentAttributes equipmentAttributes = gameAttributes.getEquipmentAttributes();
 
         while (true) {
             try {
@@ -122,28 +115,30 @@ public class BotTask extends Task {
 
     private String startIllusionCave() throws IOException, InterruptedException, AdventureRunningException, TimeOutException, FightResultException, IllusionCaveRunningException, WorkingException, IllusionDisabledException, RewardResultException {
         gameParser.getQuestParser().startIllusionCave();
-        gameAttributes.setSleep(questParser.getIllusionCaveSeconds() + SECURE_DELAY / 2);
-        Log.warn("Delay: " + gameAttributes.getSleep());
+        gameParser.getGameAttributes().setSleep(gameParser.getQuestParser().getIllusionCaveSeconds() + SECURE_DELAY / 2);
+        Log.warn("Delay: " + gameParser.getGameAttributes().getSleep());
         return "Illusion Cave. Busy until: ";
     }
 
     private String startDungeon() throws IOException, InterruptedException, RewardResultException, IllusionCaveRunningException, AdventureRunningException, WorkingException, IllusionDisabledException, TimeOutException, FightResultException {
-        Log.warn(questAttributes.getDungeonsMade() + " / " + questAttributes.getFreeDungeons());
+        Log.warn(gameParser.getGameAttributes().getQuestAttributes().getDungeonsMade() + " / " + gameParser.getGameAttributes().getQuestAttributes().getFreeDungeons());
         gameParser.getQuestParser().startDungeon();
-        gameAttributes.setSleep(SECURE_DELAY);
-        Log.warn("Delay: " + gameAttributes.getSleep());
+        gameParser.getGameAttributes().setSleep(SECURE_DELAY);
+        Log.warn("Delay: " + gameParser.getGameAttributes().getSleep());
         return "Dungeon. Busy until: ";
     }
 
     private String startAdventure() throws InterruptedException, AdventureRunningException, IllusionCaveRunningException, IOException, TimeOutException, FightResultException, WorkingException, RewardResultException, IllusionDisabledException {
+        GameAttributes gameAttributes = gameParser.getGameAttributes();
+        QuestAttributes questAttributes = gameAttributes.getQuestAttributes();
         if (cfg.getOption(ConfigSingleton.Option.autoSellItems))
-            equipmentParser.sellItemsFromInventory(cfg.getOption(ConfigSingleton.Option.sellEpics));
-        questParser.startAdventureByCriteria(new ExpCriteria());
+            gameParser.getEquipmentParser().sellItemsFromInventory(cfg.getOption(ConfigSingleton.Option.sellEpics));
+        gameParser.getQuestParser().startAdventureByCriteria(new ExpCriteria());
         Adventure currentAdventure = questAttributes.getCurrentAdventure();
         gameAttributes.setSleep(currentAdventure.getDuration() + SECURE_DELAY);
         String questDescription = controller.getQuestDescription(currentAdventure.getDifficulty(), currentAdventure.getDuration(), currentAdventure.getExperience(), currentAdventure.getFightChance(), currentAdventure.getGold(), currentAdventure.getQuestID());
         questAttributes.setAdventuresMade(questAttributes.getAdventuresMade());
-        controller.setMainContentText(questAttributes.getAdventuresMade(), questAttributes.getFreeAdventures(), questAttributes.getIllusionCaveMade(), equipmentAttributes.getInventoryUsedSpaces(), questAttributes.getDungeonsMade(), questAttributes.getFreeDungeons(), questDescription);
+        controller.setMainContentText(questAttributes.getAdventuresMade(), questAttributes.getFreeAdventures(), questAttributes.getIllusionCaveMade(), gameAttributes.getEquipmentAttributes().getInventoryUsedSpaces(), questAttributes.getDungeonsMade(), questAttributes.getFreeDungeons(), questDescription);
         return String.format("Quest (Nº %d). Busy until: %s", questAttributes.getAdventuresMade() + 1, DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalDateTime.now().plusSeconds(gameAttributes.getSleep())));
     }
 
