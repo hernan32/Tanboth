@@ -38,12 +38,12 @@ https://www.baeldung.com/java-home-on-windows-7-8-10-mac-os-x-linux
 * [Jsoup](https://jsoup.org/) - Game parsing
 * [Apache Commons Lang](https://jsoup.org/) - Game parsing supplement/helper
 * [MinLog](https://github.com/EsotericSoftware/minlog) - Java logging
-* [AWT/SystemTray](https://gist.github.com/jewelsea/e231e89e8d36ef4e5d8a) - System Tray (AWT) to control a JavaFX application
+* [AWT/SystemTray](https://gist.github.com/jewelsea/e231e89e8d36ef4e5d8a) - System Tray (AWT) for JavaFX application
 * [Java HTTP Client](https://openjdk.java.net/groups/net/httpclient/intro.html) - Tanoth HTTP Protocol
 
 ## Versioning
 
-We use [GitHub](https://github.com/) for versioning. For the versions available, see the [check this.](https://github.com/hernan32/Tanboth)
+We use [GitHub](https://github.com/) for versioning. For the versions available, check [this.](https://github.com/hernan32/Tanboth)
 
 ## Running
 
